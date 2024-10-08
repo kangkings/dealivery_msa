@@ -14,10 +14,10 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: user-service
+        - id: user-msa-service
           uri: http://localhost:8080/api
           predicates:
-            - Path=/api/user/**
+            - Path=/api/login, /api/logout, /api/user/**, /api/company/**, /api/oauth/**
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
