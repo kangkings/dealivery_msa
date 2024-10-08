@@ -11,7 +11,7 @@ project:
 
 spring:
   application:
-    name: user-service
+    name: user-msa-service
   mail:
     host: smtp.gmail.com
     port: 587
@@ -106,7 +106,7 @@ server:
     encoding:
       charset: UTF-8
       force: true
-    # context-path: ${CONTEXT_PATH}
+    context-path: ${CONTEXT_PATH}
 
 # ex. https://www.dealivery.com
 domain: ${DOMAIN}
