@@ -1,4 +1,4 @@
-package org.example.user.global.common.constants;
+package org.example.backend.global.common.constants;
 
 import lombok.Getter;
 
@@ -177,5 +177,5 @@ public enum BaseResponseStatus {
         this.isSuccess = isSuccess;
         this.code = code;
         this.message = message;
+     }
     }
-}
