@@ -21,11 +21,6 @@ public class CompanyService {
     private final CompanyRepository companyRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
     public Boolean isExist(String email){
         Optional<Company> optionalCompany = companyRepository.findByEmail(email);
         if (optionalCompany.isPresent()){

@@ -11,15 +11,14 @@ import org.example.company.domain.company.model.dto.CompanyDto;
 import org.example.company.domain.company.service.CompanyAuthTokenService;
 import org.example.company.domain.company.service.CompanyRegisterVerifyService;
 import org.example.company.domain.company.service.CompanyService;
+import org.example.company.global.adaptor.in.CompanyKafkaConsumer;
+import org.example.company.global.adaptor.out.CompanyKafkaProducer;
 import org.example.company.global.constants.BaseResponse;
 import org.example.company.global.constants.BaseResponseStatus;
 import org.example.company.global.constants.SwaggerDescription;
 import org.example.company.global.constants.SwaggerExamples;
 import org.example.company.global.exception.InvalidCustomException;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/company")
@@ -29,6 +28,8 @@ public class CompanyController {
     private final CompanyAuthTokenService companyAuthTokenService;
     private final CompanyRegisterVerifyService companyRegisterVerifyService;
     private final CompanyService companyService;
+    private final CompanyKafkaProducer companyKafkaProducer;
+
 
     @Operation(summary = "업체회원가입 API", description = SwaggerDescription.COMPANY_SIGNUP_REQUEST,
         requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -72,5 +73,11 @@ public class CompanyController {
             return new BaseResponse(BaseResponseStatus.FAIL);
         }
         return new BaseResponse();
+    }
+
+    @GetMapping("/test")
+    public String test(){
+        companyKafkaProducer.sendSignupMessage("카프카 테스트");
+        return "야호";
     }
 }
