@@ -8,9 +8,12 @@ import lombok.NoArgsConstructor;
 //import org.example.backend.domain.delivery.model.entity.Delivery;
 //import org.example.backend.domain.likes.model.entity.Likes;
 //import org.example.backend.domain.qna.model.entity.Question;
+import org.example.user.domain.delivery.model.entity.Delivery;
 import org.example.user.domain.user.model.dto.UserDto;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Getter
@@ -48,8 +51,8 @@ public class User {
 
     private String role;
 
-//    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
-//    private List<Delivery> deliveries;
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
+    private List<Delivery> deliveries;
 //
 //    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
 //    private List<Question> questions = new ArrayList<>();
@@ -73,7 +76,7 @@ public class User {
                 .addressDetail(this.addressDetail)
                 .postNumber(this.postNumber)
                 .phoneNumber(this.phoneNumber)
-//                .deliveries(this.deliveries.stream().map(Delivery::toDeliveryResponse).collect(Collectors.toList()))
+                .deliveries(this.deliveries.stream().map(Delivery::toDeliveryResponse).collect(Collectors.toList()))
                 .point(this.point)
                 .build();
     }
@@ -83,5 +86,15 @@ public class User {
         this.addressDetail = request.getAddressDetail();
         this.phoneNumber = request.getPhoneNumber();
         this.postNumber = request.getPostNumber();
+    }
+
+    public UserDto.UserSignupComplete toUserSignupComplete(){
+        return UserDto.UserSignupComplete.builder()
+                .idx(this.idx)
+                .email(this.email)
+                .password(this.password)
+                .role(this.type)
+                .role(this.role)
+                .build();
     }
 }

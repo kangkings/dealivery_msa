@@ -10,8 +10,17 @@ project:
     url: ${MAIL_URL}
 
 spring:
+  kafka:
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
   application:
-    name: user-msa-service
+    name: user-service
   mail:
     host: smtp.gmail.com
     port: 587
@@ -107,6 +116,7 @@ server:
       charset: UTF-8
       force: true
     context-path: ${CONTEXT_PATH}
+  port: 8081
 
 # ex. https://www.dealivery.com
 domain: ${DOMAIN}

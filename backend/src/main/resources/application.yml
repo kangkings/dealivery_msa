@@ -129,6 +129,7 @@ server:
       charset: UTF-8
       force: true
     # context-path: ${CONTEXT_PATH}
+  port: 8083
 
 # ex. https://www.dealivery.com
 domain: ${DOMAIN}

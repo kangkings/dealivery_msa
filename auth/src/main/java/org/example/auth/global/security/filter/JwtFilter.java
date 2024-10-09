@@ -7,15 +7,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.auth.domain.company.model.entity.Company;
 import org.example.auth.global.security.custom.model.dto.CustomCompanyDetails;
 import org.example.auth.global.security.custom.model.dto.CustomUserDetails;
 import org.example.auth.global.security.jwt.repository.CompanyRefreshTokenRepository;
-import org.example.user.domain.company.model.entity.Company;
-import org.example.user.domain.user.model.entity.User;
+
 import org.example.auth.global.security.jwt.JwtUtil;
 import org.example.auth.global.security.jwt.model.entity.CompanyRefreshToken;
 import org.example.auth.global.security.jwt.model.entity.UserRefreshToken;
 import org.example.auth.global.security.jwt.repository.UserRefreshTokenRepository;
+import org.example.auth.domain.user.model.entity.User;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -103,7 +104,6 @@ public class JwtFilter extends OncePerRequestFilter {
                     .idx(idx)
                     .email(email)
                     .role(role)
-                    .emailStatus(true)
                     .build();
             CustomUserDetails customUserDetails = new CustomUserDetails(user);
             Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
@@ -114,8 +114,6 @@ public class JwtFilter extends OncePerRequestFilter {
                     .idx(idx)
                     .email(email)
                     .role(role)
-                    .emailStatus(true)
-                    .regStatus(true)
                     .build();
             CustomCompanyDetails customCompanyDetails = new CustomCompanyDetails(company);
             Authentication authToken = new UsernamePasswordAuthenticationToken(customCompanyDetails, null, customCompanyDetails.getAuthorities());
