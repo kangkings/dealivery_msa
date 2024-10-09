@@ -8,16 +8,31 @@ eureka:
     service-url:
       defaultZone: http://localhost:8761/eureka
 
+
 spring:
+  jwt:
+    secret: ${JWT_SECRET}
   application:
     name: api-gateway
   cloud:
     gateway:
       routes:
-        - id: user-msa-service
+        - id: user-service
           uri: http://localhost:8080/api
           predicates:
-            - Path=/api/login, /api/logout, /api/user/**, /api/company/**, /api/oauth/**
+            - Path=/api/user/**
+        - id: auth-service
+          uri: http://localhost:8081/api
+          predicates:
+            - Path=/api/login, /api/logout, /api/oauth/**
+        - id: company-service
+          uri: http://localhost:8082/api
+          predicates:
+            - Path=/api/company/**
+        - id: backend-service
+          uri: http://localhost:8083/api
+          predicates:
+            - Path=/**
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG

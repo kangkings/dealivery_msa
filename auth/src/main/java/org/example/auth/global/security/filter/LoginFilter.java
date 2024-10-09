@@ -11,12 +11,13 @@ import org.example.auth.global.security.custom.auth.CustomAuthenticationToken;
 import org.example.auth.global.security.custom.model.dto.CustomCompanyDetails;
 import org.example.auth.global.security.custom.model.dto.CustomUserDetails;
 import org.example.auth.global.security.jwt.repository.CompanyRefreshTokenRepository;
-import org.example.user.domain.user.model.dto.UserDto;
-import org.example.user.global.common.constants.BaseResponse;
+
+import org.example.auth.global.constants.BaseResponse;
 import org.example.auth.global.security.jwt.JwtUtil;
 import org.example.auth.global.security.jwt.model.entity.CompanyRefreshToken;
 import org.example.auth.global.security.jwt.model.entity.UserRefreshToken;
 import org.example.auth.global.security.jwt.repository.UserRefreshTokenRepository;
+import org.example.auth.domain.user.model.dto.UserDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;

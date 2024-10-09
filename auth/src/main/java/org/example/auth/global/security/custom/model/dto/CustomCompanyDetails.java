@@ -2,7 +2,8 @@ package org.example.auth.global.security.custom.model.dto;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.example.user.domain.company.model.entity.Company;
+
+import org.example.auth.domain.company.model.entity.Company;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 

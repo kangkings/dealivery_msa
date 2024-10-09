@@ -9,10 +9,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 //import org.example.backend.domain.delivery.model.dto.DeliveryDto;
 //import org.example.backend.domain.delivery.model.entity.Delivery;
+import org.example.user.domain.delivery.model.dto.DeliveryDto;
 import org.example.user.domain.user.model.entity.User;
 import org.example.user.global.common.constants.Role;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class UserDto {
 
@@ -173,7 +176,7 @@ public class UserDto {
         private String addressDetail;
         private String postNumber;
         private String phoneNumber;
-//        private List<DeliveryDto.DeliveryResponse> deliveries;
+        private List<DeliveryDto.DeliveryResponse> deliveries;
         private Long point;
     }
 
@@ -198,5 +201,17 @@ public class UserDto {
         @Size(max = 6)
         @Pattern(regexp = "^\\d{5,}$")
         private String postNumber;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class UserSignupComplete{
+        private Long idx;
+        private String email;
+        private String password;
+        private String role;
+        private String type;
     }
 }
