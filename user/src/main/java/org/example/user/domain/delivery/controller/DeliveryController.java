@@ -7,8 +7,6 @@ import org.example.user.domain.delivery.service.DeliveryService;
 import org.example.user.global.common.constants.BaseResponse;
 import org.example.user.global.common.constants.BaseResponseStatus;
 import org.example.user.global.exception.InvalidCustomException;
-import org.example.user.global.security.custom.model.dto.CustomUserDetails;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,18 +19,18 @@ public class DeliveryController {
 
     @GetMapping("/list")
     public BaseResponse getList(
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @RequestHeader("X-User-Idx") Long userIdx
             ){
-        List<DeliveryDto.DeliveryResponse> deliveryResponses = deliveryService.getList(userDetails.getIdx());
+        List<DeliveryDto.DeliveryResponse> deliveryResponses = deliveryService.getList(userIdx);
         return new BaseResponse(deliveryResponses);
     }
 
     @PostMapping("")
     public BaseResponse createDelivery(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestHeader("X-User-Idx") Long userIdx,
             @Valid @RequestBody DeliveryDto.CreateDeliveryRequest request
     ){
-        deliveryService.createDelivery(userDetails.getIdx(),request);
+        deliveryService.createDelivery(userIdx,request);
         return new BaseResponse();
     }
 
@@ -53,22 +51,22 @@ public class DeliveryController {
     @PatchMapping("")
     public BaseResponse setDefault(
             @Valid @RequestBody DeliveryDto.SetDefaultRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @RequestHeader("X-User-Idx") Long userIdx
     ){
         if (request.getIdx() == null || request.getIdx() <= 0){
             throw new InvalidCustomException(BaseResponseStatus.FAIL);
         }
-        deliveryService.setDefault(request.getIdx(), userDetails.getIdx());
+        deliveryService.setDefault(request.getIdx(), userIdx);
 
         return new BaseResponse();
     }
 
     @PutMapping("")
     public BaseResponse editDelivery(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestHeader("X-User-Idx") Long userIdx,
             @Valid @RequestBody DeliveryDto.EditDeliveryRequest request
     ){
-        deliveryService.editDelivery(userDetails.getIdx(),request);
+        deliveryService.editDelivery(userIdx,request);
         return new BaseResponse();
     }
 

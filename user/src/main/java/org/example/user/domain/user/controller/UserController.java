@@ -14,8 +14,6 @@ import org.example.user.global.common.constants.BaseResponse;
 import org.example.user.global.common.constants.BaseResponseStatus;
 import org.example.user.global.common.constants.SwaggerDescription;
 import org.example.user.global.common.constants.SwaggerExamples;
-import org.example.user.global.security.custom.model.dto.CustomUserDetails;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -84,19 +82,20 @@ public class UserController {
 
     @GetMapping("/detail")
     public BaseResponse<UserDto.UserDetailResponse> getDetail(
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @RequestHeader("X-User-Idx") Long userIdx,
+            @RequestHeader("X-User-Email") String email
             ){
         UserDto.UserDetailResponse userDetailResponse =
-                userService.getDetail(userDetails.getUsername(),userDetails.getIdx());
+                userService.getDetail(email,userIdx);
         return new BaseResponse<>(userDetailResponse);
     }
 
     @PutMapping("/edit")
     public BaseResponse editDetail(
             @Valid @RequestBody UserDto.UserDetailEditRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @RequestHeader("X-User-Idx") Long userIdx
     ){
-        userService.editDetail(userDetails.getIdx(),request);
+        userService.editDetail(userIdx,request);
         return new BaseResponse();
     }
 }
