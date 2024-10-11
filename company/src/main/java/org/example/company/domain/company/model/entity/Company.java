@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.company.domain.company.model.dto.CompanyDto;
 
 import java.time.LocalDateTime;
 //import java.util.ArrayList;
@@ -58,4 +59,12 @@ public class Company {
 //    @OneToMany(fetch = FetchType.LAZY, mappedBy = "company")
 //    private List<ProductBoard> productBoards = new ArrayList<>();
 
+    public CompanyDto.CompanySignupComplete toCompanySignupComplete(){
+        return CompanyDto.CompanySignupComplete.builder()
+                .idx(this.idx)
+                .email(this.email)
+                .password(this.password)
+                .role(this.role)
+                .build();
+    }
 }

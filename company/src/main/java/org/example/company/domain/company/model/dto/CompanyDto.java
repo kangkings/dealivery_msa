@@ -110,4 +110,15 @@ public class CompanyDto {
         private String p_nm;
         private String start_dt;
     }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CompanySignupComplete{
+        private Long idx;
+        private String email;
+        private String password;
+        private String role;
+    }
 }

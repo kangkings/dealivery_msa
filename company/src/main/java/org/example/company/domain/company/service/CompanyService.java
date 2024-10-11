@@ -1,10 +1,12 @@
 package org.example.company.domain.company.service;
 
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.company.domain.company.model.dto.CompanyDto;
 import org.example.company.domain.company.model.entity.Company;
 import org.example.company.domain.company.repository.CompanyRepository;
+import org.example.company.global.adaptor.out.CompanyKafkaProducer;
 import org.example.company.global.constants.BaseResponseStatus;
 import org.example.company.global.exception.InvalidCustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,7 @@ public class CompanyService {
 
     private final CompanyRepository companyRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final CompanyKafkaProducer companyKafkaProducer;
 
     public Boolean isExist(String email){
         Optional<Company> optionalCompany = companyRepository.findByEmail(email);
@@ -29,7 +32,12 @@ public class CompanyService {
 
         return true;
     }
-    public void signup(CompanyDto.CompanySignupRequest request) {
+
+    @Transactional
+    public boolean signup(CompanyDto.CompanySignupRequest request) {
         Company newCompany = companyRepository.save(request.toEntity(passwordEncoder.encode(request.getPassword())));
+
+        companyKafkaProducer.sendSignupMessage(newCompany.toCompanySignupComplete());
+        return true;
     }
 }

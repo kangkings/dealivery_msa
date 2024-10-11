@@ -74,10 +74,4 @@ public class CompanyController {
         }
         return new BaseResponse();
     }
-
-    @GetMapping("/test")
-    public String test(){
-        companyKafkaProducer.sendSignupMessage("카프카 테스트");
-        return "야호";
-    }
 }

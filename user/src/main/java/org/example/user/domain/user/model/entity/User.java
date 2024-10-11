@@ -93,8 +93,8 @@ public class User {
                 .idx(this.idx)
                 .email(this.email)
                 .password(this.password)
-                .role(this.type)
                 .role(this.role)
+                .type(this.type)
                 .build();
     }
 }
