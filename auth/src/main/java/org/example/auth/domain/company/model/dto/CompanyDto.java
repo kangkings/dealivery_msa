@@ -6,5 +6,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 public class CompanyDto {
-
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class CompanySignupComplete {
+        private Long idx;
+        private String email;
+        private String password;
+        private String role;
+//        private String type;
+    }
 }

@@ -7,9 +7,13 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class AuthKafkaProducer {
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    public void sendSignupMessage(String message) {
-        kafkaTemplate.send("company_signup", message);
-    }
+//    public void sendSignupMessage(String message) {
+//        kafkaTemplate.send("company_signup", message);
+//    }
+
+//    public void sendSignupMessage(Object signupComplete){
+//        kafkaTemplate.send("user_signup_complete", signupComplete);
+//    }
 }

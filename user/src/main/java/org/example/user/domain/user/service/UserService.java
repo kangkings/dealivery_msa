@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.user.domain.user.model.dto.UserDto;
 import org.example.user.domain.user.model.entity.User;
 import org.example.user.domain.user.repository.UserRepository;
+import org.example.user.global.adaptor.out.UserKafkaProducer;
 import org.example.user.global.common.constants.BaseResponseStatus;
 import org.example.user.global.exception.InvalidCustomException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -21,6 +22,7 @@ public class UserService {
     private final UserRepository userRepository;
  //   private final DeliveryRepository deliveryRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final UserKafkaProducer userKafkaProducer;
 
     //등록된 계정이 있는지 검사
     public void isExist(String email) {
@@ -37,14 +39,14 @@ public class UserService {
         return user.toUserDetailResponse();
     }
 
+
     @Transactional
     public boolean signup(UserDto.UserSignupRequest request) {
         User newUser = userRepository.save(request.toEntity(passwordEncoder.encode(request.getPassword())));
-        //회원가입시 입력한 주소를 기본배송지로 배송지목록에 추가
-//        deliveryRepository.save(request.toDeliveryEntity(newUser));
+
+        userKafkaProducer.sendSignupMessage(newUser.toUserSignupComplete());
         return true;
     }
-
 
     @Transactional
     public boolean socialSignup(UserDto.SocialSignupRequest socialSignupRequest) {

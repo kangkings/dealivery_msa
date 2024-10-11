@@ -7,8 +7,9 @@ import java.io.IOException;
 
 @Component
 public class CompanyKafkaConsumer {
-    @KafkaListener(topics = "company_signup", groupId = "group_1")
-    public void receive(String message) throws IOException {
-        System.out.println("받은 메시지 : " + message);
-    }
+//    @KafkaListener(topics = "company_signup_complete", groupId = "group_1")
+//    public void receive(Object message) {
+//        // Object 타입의 메시지를 수신하고 이를 처리
+//        System.out.println("Received message: " + message.toString());
+//    }
 }
