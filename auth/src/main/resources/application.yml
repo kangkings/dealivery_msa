@@ -1,42 +1,10 @@
-api:
-  nts-businessman:
-    v1:
-      validate:
-        serviceKey: ${NTS_KEY}
-        url: ${NTS_BASEURL}
-
-project:
-  mail:
-    url: ${MAIL_URL}
-
 spring:
-  kafka:
-    consumer:
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: '*'
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  data:
+    redis:
+      host: localhost
+      port: 6379
   application:
-    name: auth-msa-service
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
-    properties:
-      mail:
-        smtp:
-          starttls:
-            enable: true
-            required: true
-          auth: true
-          connectiontimeout: 5000
-          timeout: 5000
-          writetimeout: 5000
-
+    name: auth-service
   jwt:
     secret: ${JWT_SECRET}
   datasource:

@@ -10,6 +10,10 @@ eureka:
 
 
 spring:
+  data:
+    redis:
+      host: 192.0.200.71
+      port: 6379
   jwt:
     secret: ${JWT_SECRET}
   application:
@@ -18,13 +22,11 @@ spring:
     gateway:
       routes:
         - id: user-service
-          uri: http://localhost:8080/api
+          uri: http://localhost:8081/api
           predicates:
             - Path=/api/user/**
-          filters:
-            - JwtFilter
         - id: auth-service
-          uri: http://localhost:8081/api
+          uri: http://localhost:8080/api
           predicates:
             - Path=/api/login, /api/logout, /api/oauth/**
         - id: company-service

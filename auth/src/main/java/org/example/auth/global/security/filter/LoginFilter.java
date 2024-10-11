@@ -7,17 +7,16 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.example.auth.global.constants.RedisKeys;
 import org.example.auth.global.security.custom.auth.CustomAuthenticationToken;
 import org.example.auth.global.security.custom.model.dto.CustomCompanyDetails;
 import org.example.auth.global.security.custom.model.dto.CustomUserDetails;
-import org.example.auth.global.security.jwt.repository.CompanyRefreshTokenRepository;
 
 import org.example.auth.global.constants.BaseResponse;
 import org.example.auth.global.security.jwt.JwtUtil;
-import org.example.auth.global.security.jwt.model.entity.CompanyRefreshToken;
-import org.example.auth.global.security.jwt.model.entity.UserRefreshToken;
-import org.example.auth.global.security.jwt.repository.UserRefreshTokenRepository;
 import org.example.auth.domain.user.model.dto.UserDto;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
@@ -30,15 +29,15 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @RequiredArgsConstructor
+@Slf4j
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final Integer COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
-
+    private final RedisTemplate<String, Object> redisTemplate;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
-    private final CompanyRefreshTokenRepository companyRefreshTokenRepository;
-    private final UserRefreshTokenRepository userRefreshTokenRepository;
 
 //    /login uri접속시 실행
 //    ;를 구분자로 email,type 분리
@@ -89,15 +88,28 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         String accessToken = jwtUtil.createAccessToken(idx, email, role);
         String refreshToken = jwtUtil.createRefreshToken(idx, email, role);
 
-        // RefreshToken 엔티티 저장
-        UserRefreshToken userRefreshToken = createUserRefreshTokenEntity(email, refreshToken);
-        userRefreshTokenRepository.save(userRefreshToken);
+        //TODO
+        // Redis 트랜잭션 처리
 
-        // 쿠키 설정
-        createTokenCookies(response, accessToken, refreshToken, "user");
+        //RefreshToken 엔티티 저장 (기존값 있으면 삭제)
+        try {
+            Object existingRefreshToken = redisTemplate.opsForValue().get(RedisKeys.USER_REFRESH_TOKEN.getKey() +email);
+            if ( existingRefreshToken != null){
+                redisTemplate.delete(RedisKeys.USER_REFRESH_TOKEN.getKey()+email);
+            }
 
-        // 응답 작성
-        writeResponse(response, userDetails.getUser().getRole());
+            redisTemplate.opsForValue().set(RedisKeys.USER_REFRESH_TOKEN.getKey()+email, refreshToken,jwtUtil.getREFRESH_EXPIRE(), TimeUnit.MILLISECONDS);
+
+            // 쿠키 설정
+            createTokenCookies(response, accessToken, refreshToken, "user");
+
+            // 응답 작성
+            writeResponse(response, userDetails.getUser().getRole());
+        }catch (Exception e){
+            //Todo
+            // 500에러 안나오게 응답추가
+            log.error("Redis Exec Error");
+        }
     }
 
     //업체회원 성공 처리
@@ -110,35 +122,28 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         String accessToken = jwtUtil.createAccessToken(idx, email, role);
         String refreshToken = jwtUtil.createRefreshToken(idx, email, role);
 
-        // RefreshToken 엔티티 저장
-        CompanyRefreshToken companyRefreshToken = createCompanyRefreshTokenEntity(email, refreshToken);
-        companyRefreshTokenRepository.save(companyRefreshToken);
+        //todo
+        // Redis 트랜잭션 처리
 
-        // 쿠키 설정
-        createTokenCookies(response, accessToken, refreshToken, "company");
+        // RefreshToken 엔티티 저장 (기존값 있으면 삭제)
+        try {
+            Object existingRefreshToken = redisTemplate.opsForValue().get(RedisKeys.COMPANY_REFRESH_TOKEN +email);
+            if ( existingRefreshToken != null){
+                redisTemplate.delete(RedisKeys.COMPANY_REFRESH_TOKEN+email);
+            }
+            redisTemplate.opsForValue().set(RedisKeys.COMPANY_REFRESH_TOKEN+email, refreshToken,jwtUtil.getREFRESH_EXPIRE(), TimeUnit.MILLISECONDS);
 
-        // 응답 작성
-        writeResponse(response, companyDetails.getCompany().getRole());
-    }
+            // 쿠키 설정
+            createTokenCookies(response, accessToken, refreshToken, "company");
 
-    // 일반회원 로그인 성공에 따른 리프레시 토큰, 엑세스 토큰 발급
-    private UserRefreshToken createUserRefreshTokenEntity(String email, String refreshToken) {
-        UserRefreshToken existingRefreshToken = userRefreshTokenRepository.findByEmail(email).orElse(null);
-        return UserRefreshToken.builder()
-                .idx(existingRefreshToken != null ? existingRefreshToken.getIdx() : null)
-                .refreshToken(refreshToken)
-                .email(email)
-                .build();
-    }
+            // 응답 작성
+            writeResponse(response, companyDetails.getCompany().getRole());
+        }catch (Exception e){
+            //Todo
+            // 500에러 안나오게 응답추가
+            log.error("Redis Exec Error");
+        }
 
-    // 업체회원 로그인 성공에 따른 리프레시 토큰, 엑세스 토큰 발급
-    private CompanyRefreshToken createCompanyRefreshTokenEntity(String email, String refreshToken) {
-        CompanyRefreshToken existingRefreshToken = companyRefreshTokenRepository.findByEmail(email).orElse(null);
-        return CompanyRefreshToken.builder()
-                .idx(existingRefreshToken != null ? existingRefreshToken.getIdx() : null)
-                .refreshToken(refreshToken)
-                .email(email)
-                .build();
     }
 
     //생성된 토큰과 유저를 구분할 3개의 토큰을 브라우저에 세팅
