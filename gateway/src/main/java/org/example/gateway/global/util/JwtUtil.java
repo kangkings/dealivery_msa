@@ -14,10 +14,8 @@ import java.util.Date;
 @Component
 public class JwtUtil {
     private SecretKey secretKey;
-    //    private final Long ACCESS_EXPIRE = 1000L * 60 * 60; // 1시간
-    private final Long ACCESS_EXPIRE = 1000L * 60*60; // 10초
-    private final Long REFRESH_EXPIRE = 1000L * 60*30; // 30분
-//    private final Long REFRESH_EXPIRE = 1000L * 60 * 60 * 24 * 30; // 30일
+    private final Long ACCESS_EXPIRE = 1000L * 60 * 30; //30분
+    private final Long REFRESH_EXPIRE = 1000L * 60 * 60 * 24; // 1일
 
     public JwtUtil(@Value("${spring.jwt.secret}") String secret) {
         this.secretKey = new SecretKeySpec(

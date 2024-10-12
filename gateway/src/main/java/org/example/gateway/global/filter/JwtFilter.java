@@ -4,21 +4,14 @@ import lombok.RequiredArgsConstructor;
 import org.example.gateway.global.constants.RedisKeys;
 import org.example.gateway.global.security.model.dto.CustomUserDetails;
 import org.example.gateway.global.util.JwtUtil;
-import org.springframework.cloud.gateway.filter.GatewayFilter;
-import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpCookie;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
@@ -26,9 +19,6 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
-import reactor.util.context.Context;
-
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -39,7 +29,6 @@ public class JwtFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        System.out.println("JwtFilter executed");
         ServerHttpRequest request = exchange.getRequest();
         MultiValueMap<String, HttpCookie> cookieArray = request.getCookies();
 
