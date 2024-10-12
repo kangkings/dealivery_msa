@@ -5,13 +5,14 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.example.auth.global.constants.RedisKeys;
 import org.example.auth.global.security.custom.model.dto.CustomOAuth2User;
 import org.example.auth.domain.user.model.entity.User;
 import org.example.auth.domain.user.repository.UserRepository;
 import org.example.auth.global.security.jwt.JwtUtil;
-import org.example.auth.global.security.jwt.model.entity.UserRefreshToken;
-import org.example.auth.global.security.jwt.repository.UserRefreshTokenRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -20,16 +21,17 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final int COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
-
+    private RedisTemplate<String, Object> redisTemplate;
     private final UserRepository userRepository;
-    private final UserRefreshTokenRepository userRefreshTokenRepository;
     private final JwtUtil jwtUtil;
 
     @Value("${domain}")
@@ -56,16 +58,28 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             }else {
                 String refreshToken = jwtUtil.createRefreshToken(user.getIdx(), user.getEmail(), user.getRole());
                 String accessToken = jwtUtil.createAccessToken(user.getIdx(), user.getEmail(), user.getRole());
-                UserRefreshToken existingRefreshToken = userRefreshTokenRepository.findByEmail(user.getEmail()).orElse(null);
-                UserRefreshToken reissuedUserRefreshToken = UserRefreshToken.builder()
-                        .idx(existingRefreshToken != null ? existingRefreshToken.getIdx() : null)
-                        .refreshToken(refreshToken)
-                        .email(user.getEmail())
-                        .build();
-                userRefreshTokenRepository.save(reissuedUserRefreshToken);
-                createTokenCookies(response, accessToken, refreshToken, "user");
-                getRedirectStrategy().sendRedirect(request, response,
-                        domain + "/login/redirect?"+"isSuccess="+true+"&isExist="+true+"&role="+user.getRole());
+
+                //TODO
+                // Redis 트랜잭션 처리
+
+                //RefreshToken 엔티티 저장 (기존값 있으면 삭제)
+                try {
+                    Object existingRefreshToken = redisTemplate.opsForValue().get(RedisKeys.USER_REFRESH_TOKEN.getKey() +email);
+                    if ( existingRefreshToken != null){
+                        redisTemplate.delete(RedisKeys.USER_REFRESH_TOKEN.getKey()+email);
+                    }
+
+                    redisTemplate.opsForValue().set(RedisKeys.USER_REFRESH_TOKEN.getKey()+email, refreshToken,jwtUtil.getREFRESH_EXPIRE(), TimeUnit.MILLISECONDS);
+
+                    createTokenCookies(response, accessToken, refreshToken, "user");
+                    getRedirectStrategy().sendRedirect(request, response,
+                            domain + "/login/redirect?"+"isSuccess="+true+"&isExist="+true+"&role="+user.getRole());
+                }catch (Exception e){
+                    //Todo
+                    // 500에러 안나오게 응답추가
+                    log.error("Redis Exec Error");
+                }
+
             }
         }
     }

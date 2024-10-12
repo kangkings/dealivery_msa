@@ -3,6 +3,7 @@ package org.example.auth.global.security.jwt;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.SignatureException;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -13,10 +14,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
+@Getter
 public class JwtUtil {
     private SecretKey secretKey;
-    private final Long ACCESS_EXPIRE = 1000L * 60 * 60; // 1시간
-    private final Long REFRESH_EXPIRE = 1000L * 60 * 60 * 24 * 30; // 30일
+    private final Long ACCESS_EXPIRE = 1000L * 60 * 30; //30분
+    private final Long REFRESH_EXPIRE = 1000L * 60 * 60 * 24; // 1일
 
     public JwtUtil(@Value("${spring.jwt.secret}") String secret) {
         this.secretKey = new SecretKeySpec(

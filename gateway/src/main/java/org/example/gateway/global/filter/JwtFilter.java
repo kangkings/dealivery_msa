@@ -1,88 +1,126 @@
 package org.example.gateway.global.filter;
 
+import lombok.RequiredArgsConstructor;
+import org.example.gateway.global.constants.RedisKeys;
+import org.example.gateway.global.security.model.dto.CustomUserDetails;
 import org.example.gateway.global.util.JwtUtil;
-import org.springframework.cloud.gateway.filter.GatewayFilter;
-import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpCookie;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
-
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Mono;
 import java.util.List;
 
 @Component
-public class JwtFilter extends AbstractGatewayFilterFactory<JwtFilter.Config> {
+@RequiredArgsConstructor
+public class JwtFilter implements WebFilter {
     private final JwtUtil jwtUtil;
-
-    public JwtFilter(JwtUtil jwtUtil) { super(Config.class); this.jwtUtil = jwtUtil; }
-
-    public static class Config { }
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Override
-    public GatewayFilter apply(Config config) {
-        return ((exchange, chain)-> {
-            ServerHttpRequest request = exchange.getRequest();
-            System.out.println(request.getURI().getPath());
-            System.out.println(request.getURI().getPath());
-            System.out.println(request.getURI().getPath());
-            System.out.println(request.getURI().getPath());
-            System.out.println(request.getURI().getPath());
-            System.out.println(request.getURI().getPath());
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        ServerHttpRequest request = exchange.getRequest();
+        MultiValueMap<String, HttpCookie> cookieArray = request.getCookies();
 
-            HttpCookie accessTokenCookie = null;
-            HttpCookie refreshTokenCookie = null;
-            HttpCookie typeCookie = null;
-            MultiValueMap<String, HttpCookie> cookieArray = request.getCookies();
-            // 쿠키가 없을 시 필터 통과
-            if (cookieArray == null || cookieArray.isEmpty()) {
-                String path = request.getURI().getPath();
-                System.out.println(path);
+        // 쿠키가 없을 시 필터 통과
+        if (cookieArray == null || cookieArray.isEmpty()) {
+            return chain.filter(exchange);
+        }
+
+        // 쿠키 매핑
+        String accessToken = null;
+        String refreshToken = null;
+        String type = null;
+
+        for (String cookieName : cookieArray.keySet()) {
+            List<HttpCookie> cookies = cookieArray.get(cookieName);
+            for (HttpCookie cookie : cookies) {
+                if (cookie.getName().equals("AToken")) {
+                    accessToken = cookie.getValue();
+                }
+                if (cookie.getName().equals("RToken")) {
+                    refreshToken = cookie.getValue();
+                }
+                if (cookie.getName().equals("type")) {
+                    type = cookie.getValue();
+                }
+            }
+        }
+
+        // 액세스 토큰이 없으면 필터 진행
+        if (accessToken == null) {
+            return chain.filter(exchange);
+        }
+
+        // 액세스 토큰 만료 시 처리
+        if (jwtUtil.isExpired(accessToken)) {
+            // 리프레시 토큰이 없거나 만료되었을 경우
+            if (refreshToken == null || jwtUtil.isExpired(refreshToken)) {
+                // 쿠키 삭제 처리
+                List<String> cookieNames = List.of("AToken", "RToken", "type");
+                cookieNames.forEach(cookieName -> {
+                    ResponseCookie cookie = ResponseCookie.from(cookieName, null)
+                            .path("/")
+                            .httpOnly(true)
+                            .secure(true)
+                            .maxAge(0)
+                            .build();
+                    exchange.getResponse().addCookie(cookie);
+                });
                 return chain.filter(exchange);
             }
 
-            // 쿠키 매핑
-            for (String cookieName : cookieArray.keySet()) {
-                List<HttpCookie> cookies = cookieArray.get(cookieName);
-                for (HttpCookie cookie : cookies) {
-                    if (cookie.getName().equals("AToken")) {
-                        accessTokenCookie = cookie;
-                    }
-                    if (cookie.getName().equals("RToken")) {
-                        refreshTokenCookie = cookie;
-                    }
-                    if (cookie.getName().equals("type")) {
-                        typeCookie = cookie;
-                    }
-                }
+            // 리프레시 토큰 진위 판별 후 액세스 토큰 재발급
+            String email = jwtUtil.getEmail(refreshToken);
+            String existingRefreshToken = String.valueOf(
+                    type.equals("user")
+                            ? redisTemplate.opsForValue().get(RedisKeys.USER_REFRESH_TOKEN.getKey() + email)
+                            : redisTemplate.opsForValue().get(RedisKeys.COMPANY_REFRESH_TOKEN.getKey() + email)
+            );
+
+            if (!existingRefreshToken.equals(refreshToken)) {
+                return chain.filter(exchange);
             }
 
-            //로드밸런싱 함수 호출
-
-
-            //넘겨받은 값이 없다 = 로그인안한거 -> 다 혀용된 URI만 접근가능
-            //  근데 권한이 필요한 URI요청이다? -> 권한없음 응답. 아니면 통과
-
-            //넘겨받은 값이 있다.
-            // 토큰에서 값 추출 (idx, email, role)
-            // 로드밸런싱할 때 권한비교
-            //  -> /user/**이고 role == ROLE_USER -> 통과 아니면 권한없음
-            //  -> /company/**이고 role == ROLE_COMPANY -> 통과 아니면 권한없음
-            //  -> /orders/**이고 role == ROLE_USER or ROLE_COMPANY -> 통과 아니면 권한없음
-
-
-
-            exchange.getRequest().mutate()
-                    .header("X-User-Idx", ""+jwtUtil.getIdx(accessTokenCookie.getValue()))
-                    .header("X-User-Email", jwtUtil.getEmail(accessTokenCookie.getValue()))
-                    .header("X-User-Role", jwtUtil.getRole(accessTokenCookie.getValue()))
+            accessToken = jwtUtil.createAccessToken(jwtUtil.getIdx(refreshToken), jwtUtil.getEmail(refreshToken), jwtUtil.getRole(refreshToken));
+            ResponseCookie cookie = ResponseCookie.from("AToken", accessToken)
+                    .path("/")
+                    .httpOnly(true)
+                    .secure(true)
                     .build();
+            exchange.getResponse().addCookie(cookie);
+        }
 
-            return chain.filter(exchange);
-        });
+        Long userIdx = jwtUtil.getIdx(accessToken);
+        String email = jwtUtil.getEmail(accessToken);
+        String role = jwtUtil.getRole(accessToken);
+
+        // CustomUserDetails 객체 생성
+        CustomUserDetails userDetails = new CustomUserDetails(userIdx, email, role, AuthorityUtils.createAuthorityList(role));
+
+        // Authentication 객체 생성
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+        // SecurityContext 설정
+        SecurityContext securityContext = new SecurityContextImpl(authentication);
+
+        exchange.getRequest().mutate()
+                .header("X-User-Idx", String.valueOf(userIdx))
+                .header("X-User-Email", email)
+                .header("X-User-Role", role)
+                .build();
+
+        return chain.filter(exchange).contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(securityContext)));
     }
-
-
 }
 

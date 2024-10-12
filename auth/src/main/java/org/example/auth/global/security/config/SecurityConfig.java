@@ -1,21 +1,17 @@
 package org.example.auth.global.security.config;
 
 
+import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import org.example.auth.global.security.custom.service.OAuth2Service;
-import org.example.auth.global.security.filter.JwtFilter;
 import org.example.auth.global.security.filter.LoginFilter;
-import org.example.auth.global.security.handler.AccessDeniedHandler;
-import org.example.auth.global.security.handler.CustomLogoutSuccessHandler;
-import org.example.auth.global.security.handler.LoginFailureHandler;
-import org.example.auth.global.security.handler.OAuth2AuthenticationSuccessHandler;
+import org.example.auth.global.security.handler.*;
 
 import org.example.auth.global.security.jwt.JwtUtil;
-import org.example.auth.global.security.jwt.repository.CompanyRefreshTokenRepository;
-import org.example.auth.global.security.jwt.repository.UserRefreshTokenRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -24,6 +20,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.CookieClearingLogoutHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
@@ -34,13 +31,13 @@ import org.springframework.web.filter.CorsFilter;
 public class SecurityConfig {
     private final JwtUtil jwtUtil;
     private final AuthenticationConfiguration authenticationConfiguration;
-    private final UserRefreshTokenRepository userRefreshTokenRepository;
-    private final CompanyRefreshTokenRepository companyRefreshTokenRepository;
     private final AccessDeniedHandler accessDeniedHandler;
     private final LoginFailureHandler loginFailureHandler;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final CustomLogoutSuccessHandler customLogoutSuccessHandler;
     private final OAuth2Service oAuth2Service;
+    private final RedisTemplate<String,Object> redisTemplate;
+    private final CustomLogoutHandler customLogoutHandler;
 
 
     @Value("${domain}")
@@ -89,11 +86,26 @@ public class SecurityConfig {
         );
         //로그아웃 처리
         http.logout(logout -> {
-            logout.logoutUrl("/logout");
-            logout.logoutSuccessHandler(customLogoutSuccessHandler);
-            logout.deleteCookies("JSESSIONID","AToken","RToken","type");
-            logout.invalidateHttpSession(true);
-            logout.permitAll();
+            logout.logoutUrl("/logout")
+                    .logoutSuccessHandler(customLogoutSuccessHandler)
+                    .addLogoutHandler(customLogoutHandler)
+                    .addLogoutHandler(new CookieClearingLogoutHandler(
+                            new Cookie("type", null) {{
+                                setPath("/");// root 경로의 쿠키 삭제
+                                setMaxAge(0);
+                            }},
+                            new Cookie("AToken", null) {{
+                                setPath("/");  // root 경로의 쿠키 삭제
+                                setMaxAge(0);
+                            }},
+                            new Cookie("RToken", null) {{
+                                setPath("/");  // root 경로의 쿠키 삭제
+                                setMaxAge(0);
+                            }}
+                    ))
+                    .invalidateHttpSession(true)
+                    .deleteCookies("AToken", "RToken", "type")
+                    .permitAll();
         });
 
         http.oauth2Login(
@@ -108,8 +120,7 @@ public class SecurityConfig {
             );
 
         //필터생성 및 설정추가
-        LoginFilter loginFilter = new LoginFilter(jwtUtil, authenticationManager(authenticationConfiguration)
-                ,companyRefreshTokenRepository,userRefreshTokenRepository);
+        LoginFilter loginFilter = new LoginFilter(redisTemplate,jwtUtil, authenticationManager(authenticationConfiguration));
         loginFilter.setFilterProcessesUrl("/login");
         loginFilter.setAuthenticationFailureHandler(loginFailureHandler);
 
@@ -122,7 +133,6 @@ public class SecurityConfig {
             config.userInfoEndpoint((endPoint) -> endPoint.userService(oAuth2Service));
         });
 
-        http.addFilterBefore(new JwtFilter(jwtUtil, companyRefreshTokenRepository, userRefreshTokenRepository), LoginFilter.class);
         http.addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
