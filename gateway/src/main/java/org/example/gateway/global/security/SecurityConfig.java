@@ -25,7 +25,7 @@ public class SecurityConfig {
                         .pathMatchers("/api/user/signup","/api/login","/api/logout",
                                 "/api/company/signup").permitAll()
                         .pathMatchers("/api/user/**").hasRole("USER") // /user/** 경로는 ROLE_USER 권한 필요
-                        .anyExchange().authenticated() // 나머지 요청은 인증 필요
+                        .anyExchange().permitAll() // 나머지 요청은 인증 필요
                 );
         http.addFilterBefore(jwtFilter, SecurityWebFiltersOrder.AUTHENTICATION);
 

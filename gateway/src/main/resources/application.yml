@@ -33,10 +33,18 @@ spring:
           uri: lb://company-service
           predicates:
             - Path=/api/company/**
-        - id: backend-service-route
-          uri: lb://backend-service
+        - id: order-service-route
+          uri: lb://order-service
           predicates:
-            - Path=/**
+            - Path=/api/orders/**
+        - id: board-service-route
+          uri: lb://board-service
+          predicates:
+            - Path=/api/product-boards/**, /api/likes/**
+        - id: qna-service-route
+          uri: lb://qna-service
+          predicates:
+            - Path=/api/qna/**
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
