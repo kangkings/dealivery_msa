@@ -1,6 +1,5 @@
 package org.example.backend.global.infra.db;
 
-import jakarta.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,9 +20,6 @@ import org.example.backend.domain.orders.model.entity.Orders;
 import org.example.backend.domain.orders.repository.OrderedProductRepository;
 import org.example.backend.domain.orders.repository.OrdersRepository;
 import org.example.backend.global.common.constants.BoardStatus;
-import org.example.backend.global.common.constants.OrderStatus;
-import org.example.backend.global.common.constants.PaymentType;
-import org.example.backend.global.utils.RandomCodeGenerator;
 import org.springframework.stereotype.Component;
 
 @Component

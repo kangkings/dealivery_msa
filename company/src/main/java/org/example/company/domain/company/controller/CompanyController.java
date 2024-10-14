@@ -28,7 +28,6 @@ public class CompanyController {
     private final CompanyAuthTokenService companyAuthTokenService;
     private final CompanyRegisterVerifyService companyRegisterVerifyService;
     private final CompanyService companyService;
-    private final CompanyKafkaProducer companyKafkaProducer;
 
 
     @Operation(summary = "업체회원가입 API", description = SwaggerDescription.COMPANY_SIGNUP_REQUEST,
