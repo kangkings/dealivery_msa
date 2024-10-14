@@ -1,15 +1,6 @@
-api:
-  nts-businessman:
-    v1:
-      validate:
-        serviceKey: ${NTS_KEY}
-        url: ${NTS_BASEURL}
-
 spring:
   application:
     name: board-service
-  jwt:
-    secret: ${JWT_SECRET}
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -58,9 +49,6 @@ server:
       force: true
     # context-path: ${CONTEXT_PATH}
   port: 8087
-
-# ex. https://www.dealivery.com
-domain: ${DOMAIN}
 
 eureka:
   client:
