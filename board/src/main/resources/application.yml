@@ -6,6 +6,8 @@ api:
         url: ${NTS_BASEURL}
 
 spring:
+  application:
+    name: board-service
   jwt:
     secret: ${JWT_SECRET}
   datasource:
@@ -59,4 +61,9 @@ server:
 
 # ex. https://www.dealivery.com
 domain: ${DOMAIN}
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
 
