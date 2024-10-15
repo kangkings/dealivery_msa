@@ -20,10 +20,8 @@ public class AnswerController {
 
     @Operation(summary = "답변 등록 API", description = "기업회원이 문의에 대한 답변을 등록합니다.")
     @PostMapping("/create")
-    public BaseResponse createAnswer(@RequestBody AnswerDto.AnswerCreateRequest request, @AuthenticationPrincipal UserDetails userDetails) {
+    public BaseResponse createAnswer(@RequestBody AnswerDto.AnswerCreateRequest request, @RequestHeader("X-User-Email") String email) {
         try {
-            String email = userDetails.getUsername(); // 인증된 기업회원 이메일
-
             // 답변 등록 서비스 호출
             answerService.createAnswer(request, email);
             return new BaseResponse<>(BaseResponseStatus.SUCCESS);
@@ -36,9 +34,8 @@ public class AnswerController {
 
     @Operation(summary = "답변 삭제 API", description = "답변을 삭제합니다.")
     @DeleteMapping("/delete/{id}")
-    public BaseResponse deleteAnswer(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
+    public BaseResponse deleteAnswer(@PathVariable Long id, @RequestHeader("X-User-Email") String email) {
         try {
-            String email = userDetails.getUsername(); // 인증된 기업회원 이메일
             answerService.deleteAnswer(id, email);
             return new BaseResponse<>(BaseResponseStatus.SUCCESS);
         } catch (InvalidCustomException e) {
