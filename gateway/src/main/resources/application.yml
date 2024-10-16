@@ -28,7 +28,7 @@ spring:
         - id: auth-service-route
           uri: lb://auth-service
           predicates:
-            - Path=/api/login, /api/logout, /api/oauth/**
+            - Path=/api/login, /api/logout, /api/oauth/**, /api/auth/**
         - id: order-service-route
           uri: lb://order-service
           predicates:

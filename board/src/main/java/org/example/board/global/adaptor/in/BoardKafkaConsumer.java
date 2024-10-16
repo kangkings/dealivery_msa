@@ -2,7 +2,6 @@ package org.example.board.global.adaptor.in;
 
 import lombok.AllArgsConstructor;
 import org.example.board.domain.board.model.entity.ProductBoard;
-import org.example.board.domain.board.model.event.BoardRegisterEvent;
 import org.example.board.domain.board.repository.ProductBoardRepository;
 import org.example.board.domain.company.model.dto.CompanyDto;
 import org.example.board.domain.company.model.entity.Company;

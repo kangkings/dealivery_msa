@@ -1,11 +1,12 @@
 package org.example.orders.domain.product.model.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.orders.domain.board.model.entity.ProductBoard;
+import org.example.orders.domain.company.model.entity.Company;
 
 @Entity
 @Getter
@@ -31,4 +32,8 @@ public class Product {
     public void increaseStock(Integer quantity) {
         this.stock += quantity;
     }
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name ="product_board_idx")
+    private ProductBoard productBoard;
 }
