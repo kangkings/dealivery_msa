@@ -121,8 +121,13 @@ public class ProductBoardService {
 		if (!isCreated) {
 			throw new InvalidCustomException(BaseResponseStatus.PRODUCT_BOARD_QUEUE_CREATE_FAIL);
 		}
+
+		List<ProductDto.RegisteredProduct> registeredProducts = savedProducts.stream()
+				.map(Product::toRegisteredProduct) // Product 객체의 toRegisteredProduct() 호출
+				.toList();
+
 		// 이벤트 발행
-		ProductBoardEvent.BoardRegisterCompleteEvent event = savedProductBoard.toDto(savedProducts);
+		ProductBoardEvent.BoardRegisterCompleteEvent event = savedProductBoard.toDto(registeredProducts);
 		boardKafkaProducer.sendBoardRegisterCompleteEvent(event);
 	}
 

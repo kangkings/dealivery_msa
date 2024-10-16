@@ -171,15 +171,16 @@ public class ProductBoard {
 				.build();
 	}
 
-	public ProductBoardEvent.BoardRegisterCompleteEvent toDto(List<Product> savedProducts) {
+	public ProductBoardEvent.BoardRegisterCompleteEvent toDto(List<ProductDto.RegisteredProduct> registeredProducts) {
 		return ProductBoardEvent.BoardRegisterCompleteEvent.builder()
+				.idx(this.idx)
 				.title(this.title)
 				.companyIdx(this.company.getIdx())
 				.discountRate(this.discountRate)
 				.productThumbnailUrl(this.productThumbnailUrl)
-				.productIdxList(savedProducts.stream()
-						.map(Product::getIdx)
-						.collect(Collectors.toList()))
+				.products(registeredProducts)
+				.minimumPrice(this.minimumPrice)
+				.endedAt(this.endedAt)
 				.build();
 	}
 }

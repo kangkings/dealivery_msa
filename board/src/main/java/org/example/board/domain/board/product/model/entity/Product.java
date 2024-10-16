@@ -48,4 +48,13 @@ public class Product {
 			.price(this.price)
 			.build();
 	}
+
+	public ProductDto.RegisteredProduct toRegisteredProduct(){
+	  return ProductDto.RegisteredProduct.builder()
+			  .idx(this.idx)
+			  .name(this.name)
+			  .price(this.price)
+			  .stock(this.stock)
+			  .build();
+	}
 }
