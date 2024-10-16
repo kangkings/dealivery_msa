@@ -42,6 +42,7 @@ derby.log
 /gateway/build/
 /user/build/
 /board/build/
+/orders/build/
 /spring-*/build/
 /framework-*/build/
 /integration-tests/build/
