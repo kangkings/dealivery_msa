@@ -123,9 +123,9 @@ public class BoardController {
 		}
 	}
 
-	@GetMapping("/test")
-	public ResponseEntity<LocalDateTime> test(){
-		productBoardService.test();
-		return ResponseEntity.ok(LocalDateTime.now());
-	}
+//	@GetMapping("/test")
+//	public ResponseEntity<LocalDateTime> test(){
+//		productBoardService.test();
+//		return ResponseEntity.ok(LocalDateTime.now());
+//	}
 }

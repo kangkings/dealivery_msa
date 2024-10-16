@@ -62,6 +62,7 @@ public class Company {
     public CompanyDto.CompanySignupComplete toCompanySignupComplete(){
         return CompanyDto.CompanySignupComplete.builder()
                 .idx(this.idx)
+                .companyName(this.companyName)
                 .email(this.email)
                 .password(this.password)
                 .role(this.role)

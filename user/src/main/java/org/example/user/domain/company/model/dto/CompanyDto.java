@@ -117,6 +117,7 @@ public class CompanyDto {
     @Builder
     public static class CompanySignupComplete{
         private Long idx;
+        private String companyName;
         private String email;
         private String password;
         private String role;
