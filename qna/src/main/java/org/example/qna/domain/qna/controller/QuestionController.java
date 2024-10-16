@@ -10,8 +10,6 @@ import org.example.qna.global.common.constants.BaseResponse;
 import org.example.qna.global.common.constants.BaseResponseStatus;
 import org.example.qna.global.common.constants.SwaggerDescription;
 import org.example.qna.global.common.constants.SwaggerExamples;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,8 +31,8 @@ public class QuestionController {
                     )
             ))
     @PostMapping("/create")
-    public BaseResponse create(@RequestBody QuestionDto.QuestionCreateRequest request, @AuthenticationPrincipal UserDetails userDetails) {
-        String email = userDetails.getUsername(); // 인증된 사용자의 이메일 가져오기
+    public BaseResponse create(@RequestBody QuestionDto.QuestionCreateRequest request,
+                               @RequestHeader("X-User-Email") String email) {
         Long productBoardIdx = request.getProductBoardIdx();  // Request Body로 전달받은 productBoardIdx 사용
 
         QuestionDto.QuestionCreateResponse response = questionService.createQuestion(request, email, productBoardIdx);
@@ -49,25 +47,26 @@ public class QuestionController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public BaseResponse deleteQuestion(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
-        String email = userDetails.getUsername();
+    public BaseResponse deleteQuestion(@PathVariable Long id,
+                                       @RequestHeader("X-User-Email") String email) {
         questionService.deleteQuestion(id, email);
         return new BaseResponse<>(BaseResponseStatus.SUCCESS);
     }
 
     @Operation(summary = "문의 목록 조회 API", description = "로그인된 기업 회원이 자신의 게시글에 달린 문의만 조회합니다.")
     @GetMapping("/list/company")
-    public BaseResponse<List<QuestionDto.QuestionListResponse>> getCompanyQuestions(@AuthenticationPrincipal UserDetails userDetails) {
-        String companyEmail = userDetails.getUsername();  // 인증된 기업 회원의 이메일 가져오기
+    public BaseResponse<List<QuestionDto.QuestionListResponse>> getCompanyQuestions(
+            @RequestHeader("X-User-Email") String companyEmail
+    ) {
         List<QuestionDto.QuestionListResponse> questionList = questionService.getQuestionsByCompanyEmail(companyEmail);
         return new BaseResponse<>(questionList);
     }
 
     @Operation(summary = "로그인된 사용자의 문의 목록 조회 API", description = "로그인된 사용자가 작성한 문의 목록만 조회합니다.")
     @GetMapping("/list/my")
-    public BaseResponse<List<QuestionDto.QuestionListResponse>> getMyQuestions(@AuthenticationPrincipal UserDetails userDetails) {
-        String userEmail = userDetails.getUsername();  // 인증된 사용자의 이메일 가져오기
-        List<QuestionDto.QuestionListResponse> questionList = questionService.getQuestionsByUserEmail(userEmail);
+    public BaseResponse<List<QuestionDto.QuestionListResponse>> getMyQuestions(
+            @RequestHeader("X-User-Email") String email) {
+        List<QuestionDto.QuestionListResponse> questionList = questionService.getQuestionsByUserEmail(email);
         return new BaseResponse<>(questionList);
     }
 
@@ -75,8 +74,7 @@ public class QuestionController {
     @PutMapping("/update/{id}")
     public BaseResponse updateQuestion(@PathVariable Long id,
                                        @RequestBody QuestionDto.QuestionUpdateRequest request,
-                                       @AuthenticationPrincipal UserDetails userDetails) {
-        String email = userDetails.getUsername();
+                                       @RequestHeader("X-User-Email") String email) {
         questionService.updateQuestion(id, request, email);
         return new BaseResponse<>(BaseResponseStatus.SUCCESS);
     }

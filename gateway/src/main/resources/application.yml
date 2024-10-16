@@ -12,7 +12,7 @@ eureka:
 spring:
   data:
     redis:
-      host: 192.168.45.160
+      host: 192.0.200.71
       port: 6379
   jwt:
     secret: ${JWT_SECRET}

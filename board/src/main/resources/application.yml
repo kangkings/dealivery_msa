@@ -47,11 +47,15 @@ server:
     encoding:
       charset: UTF-8
       force: true
-    # context-path: ${CONTEXT_PATH}
+    context-path: ${CONTEXT_PATH}
   port: 8087
+
+domain: ${DOMAIN}
 
 eureka:
   client:
-    register-with-eureka: false
-    fetch-registry: false
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
 
