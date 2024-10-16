@@ -9,7 +9,7 @@ import org.example.board.domain.board.category.repository.CategoryRepository;
 import org.example.board.domain.board.model.dto.ProductBoardDto;
 import org.example.board.domain.board.model.entity.ProductBoard;
 import org.example.board.domain.board.model.entity.ProductThumbnailImage;
-import org.example.board.domain.board.model.event.BoardRegisterEvent;
+import org.example.board.domain.board.model.event.ProductBoardEvent;
 import org.example.board.domain.board.product.model.dto.ProductDto;
 import org.example.board.domain.board.product.model.entity.Product;
 import org.example.board.domain.board.product.repository.ProductRepository;
@@ -122,7 +122,7 @@ public class ProductBoardService {
 			throw new InvalidCustomException(BaseResponseStatus.PRODUCT_BOARD_QUEUE_CREATE_FAIL);
 		}
 		// 이벤트 발행
-		BoardRegisterEvent event = BoardRegisterEvent.fromEntity(savedProductBoard);
+		ProductBoardEvent.BoardRegisterEvent event = savedProductBoard.toDto(savedProducts);
 		boardKafkaProducer.sendBoardRegisterEvent(event);
 	}
 

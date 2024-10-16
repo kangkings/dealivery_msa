@@ -6,8 +6,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.orders.domain.company.model.entity.Company;
+import org.example.orders.domain.product.model.entity.Product;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -32,4 +35,7 @@ public class ProductBoard {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_idx")
     private Company company;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "productBoard")
+    private List<Product> products = new ArrayList<>();
 }

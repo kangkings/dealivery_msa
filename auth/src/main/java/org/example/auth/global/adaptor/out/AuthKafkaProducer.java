@@ -1,6 +1,6 @@
 package org.example.auth.global.adaptor.out;
 
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
@@ -9,11 +9,5 @@ import org.springframework.stereotype.Component;
 public class AuthKafkaProducer {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-//    public void sendSignupMessage(String message) {
-//        kafkaTemplate.send("company_signup", message);
-//    }
 
-//    public void sendSignupMessage(Object signupComplete){
-//        kafkaTemplate.send("user_signup_complete", signupComplete);
-//    }
 }

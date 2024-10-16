@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.board.domain.board.category.model.entity.Category;
 import org.example.board.domain.board.model.dto.ProductBoardDto;
+import org.example.board.domain.board.model.event.ProductBoardEvent;
 import org.example.board.domain.board.product.model.dto.ProductDto;
 import org.example.board.domain.board.product.model.entity.Product;
 import org.example.board.domain.company.model.entity.Company;
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Builder
@@ -166,6 +168,18 @@ public class ProductBoard {
 				.category(this.category.getName())
 				.price(this.minimumPrice)
 				.discountRate(this.discountRate)
+				.build();
+	}
+
+	public ProductBoardEvent.BoardRegisterEvent toDto(List<Product> savedProducts) {
+		return ProductBoardEvent.BoardRegisterEvent.builder()
+				.title(this.title)
+				.companyIdx(this.company.getIdx())
+				.discountRate(this.discountRate)
+				.productThumbnailUrl(this.productThumbnailUrl)
+				.productIdxList(savedProducts.stream()
+						.map(Product::getIdx)
+						.collect(Collectors.toList()))
 				.build();
 	}
 }
