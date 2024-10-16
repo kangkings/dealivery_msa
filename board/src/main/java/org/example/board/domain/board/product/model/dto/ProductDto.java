@@ -65,4 +65,18 @@ public class ProductDto {
 				.build();
 		}
 	}
+
+	@Getter
+	@Builder
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class RegisteredProduct{
+		private Long idx;
+
+		private String name;
+
+		private Integer price;
+
+		private Integer stock;
+	}
 }

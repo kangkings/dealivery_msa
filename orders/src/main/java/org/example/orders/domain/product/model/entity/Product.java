@@ -21,8 +21,6 @@ public class Product {
 
     private Integer price;
 
-    private Integer quantity;
-
     private Integer stock;
 
     public void decreaseStock(Integer quantity) {

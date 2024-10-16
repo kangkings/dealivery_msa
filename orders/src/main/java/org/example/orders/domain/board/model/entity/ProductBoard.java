@@ -25,10 +25,10 @@ public class ProductBoard {
     private String title;
 
     private String productThumbnailUrl;
-
     private Integer minimumPrice;
 
     private Integer discountRate;
+
 
     private LocalDateTime endedAt;
 
