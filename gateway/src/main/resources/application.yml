@@ -24,15 +24,11 @@ spring:
         - id: user-service-route
           uri: lb://user-service
           predicates:
-            - Path=/api/user/**
+            - Path=/api/user/**, /api/company/**
         - id: auth-service-route
           uri: lb://auth-service
           predicates:
             - Path=/api/login, /api/logout, /api/oauth/**
-        - id: company-service-route
-          uri: lb://company-service
-          predicates:
-            - Path=/api/company/**
         - id: order-service-route
           uri: lb://order-service
           predicates:
@@ -40,11 +36,7 @@ spring:
         - id: board-service-route
           uri: lb://board-service
           predicates:
-            - Path=/api/product-boards/**, /api/likes/**
-        - id: qna-service-route
-          uri: lb://qna-service
-          predicates:
-            - Path=/api/qna/**
+            - Path=/api/product-boards/**, /api/likes/**, /api/qna/**
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
