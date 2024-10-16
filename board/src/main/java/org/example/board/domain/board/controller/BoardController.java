@@ -122,10 +122,4 @@ public class BoardController {
 			return MAIN_OPEN;
 		}
 	}
-
-	@GetMapping("/test")
-	public ResponseEntity<LocalDateTime> test(){
-		productBoardService.test();
-		return ResponseEntity.ok(LocalDateTime.now());
-	}
 }
