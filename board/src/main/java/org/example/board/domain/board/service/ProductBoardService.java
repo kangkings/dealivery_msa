@@ -9,12 +9,14 @@ import org.example.board.domain.board.category.repository.CategoryRepository;
 import org.example.board.domain.board.model.dto.ProductBoardDto;
 import org.example.board.domain.board.model.entity.ProductBoard;
 import org.example.board.domain.board.model.entity.ProductThumbnailImage;
+import org.example.board.domain.board.model.event.BoardRegisterEvent;
 import org.example.board.domain.board.product.model.dto.ProductDto;
 import org.example.board.domain.board.product.model.entity.Product;
 import org.example.board.domain.board.product.repository.ProductRepository;
 import org.example.board.domain.board.repository.ProductBoardRepository;
 import org.example.board.domain.board.repository.ProductThumbnailImageRepository;
 import org.example.board.domain.likes.repository.LikesRepository;
+import org.example.board.global.adaptor.out.BoardKafkaProducer;
 import org.example.board.global.common.constants.BaseResponseStatus;
 import org.example.board.global.common.constants.BoardStatus;
 import org.example.board.global.exception.InvalidCustomException;
@@ -45,6 +47,8 @@ public class ProductBoardService {
 	private final AmazonS3 s3;
 	@Value("${cloud.aws.s3.bucket}")
 	private String bucket;
+
+	private final BoardKafkaProducer boardKafkaProducer;
 
 	public Slice<ProductBoardDto.BoardListResponse> mainList(String status, Pageable pageable) {
 		Slice<ProductBoard> productBoards = productBoardRepository.searchByStatus(BoardStatus.from(status).getStatus(), pageable);
@@ -111,6 +115,10 @@ public class ProductBoardService {
 		ProductBoard savedProductBoard = saveProductBoard(companyIdx, boardCreateRequest, thumbnailUrls.get(0), productDetailUrl);
 		List<Product> savedProducts = saveProduct(boardCreateRequest, savedProductBoard);
 		List<ProductThumbnailImage> productThumbnailImages = saveProductThumbnailImage(boardCreateRequest, thumbnailUrls, savedProductBoard);
+
+		// 이벤트 발행
+		BoardRegisterEvent event = BoardRegisterEvent.fromEntity(savedProductBoard);
+		boardKafkaProducer.sendBoardRegisterEvent(event);
 	}
 
 	// 판매자 게시글 조회

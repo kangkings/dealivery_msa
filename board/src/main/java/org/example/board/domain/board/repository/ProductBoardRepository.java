@@ -5,6 +5,7 @@ import org.example.board.domain.board.repository.querydsl.ProductBoardRepository
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ProductBoardRepository extends JpaRepository<ProductBoard, Long>, ProductBoardRepositoryCustom {
@@ -13,4 +14,6 @@ public interface ProductBoardRepository extends JpaRepository<ProductBoard, Long
 
 	@Query("SELECT pb FROM ProductBoard pb JOIN FETCH pb.category JOIN FETCH pb.productThumbnailImages WHERE pb.idx = :idx and pb.company.idx = :companyIdx")
 	Optional<ProductBoard> findByCompanyIdxAndIdx(Long companyIdx, Long idx);
+
+	List<ProductBoard> findByCompanyEmail(String companyEmail);
 }
