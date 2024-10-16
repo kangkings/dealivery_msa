@@ -16,4 +16,5 @@ public class Company {
     @Id
     private Long idx;
     private String companyName;
+    private String email;
 }
