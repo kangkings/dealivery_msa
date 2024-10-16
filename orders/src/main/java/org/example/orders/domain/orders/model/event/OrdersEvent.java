@@ -36,13 +36,4 @@ public class OrdersEvent {
 
     }
 
-    @Builder
-    @Getter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Test{
-        private Long idx;
-        private String name;
-    }
-
 }
