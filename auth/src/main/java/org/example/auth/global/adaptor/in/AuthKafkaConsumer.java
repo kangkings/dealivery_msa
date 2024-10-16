@@ -14,7 +14,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.rmi.server.ExportException;
+import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @Component
 @RequiredArgsConstructor
@@ -86,4 +89,5 @@ public class AuthKafkaConsumer {
 
         companyRepository.save(newCompany);
     }
+
 }

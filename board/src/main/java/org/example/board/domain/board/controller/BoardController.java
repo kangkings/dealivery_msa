@@ -11,8 +11,11 @@ import org.example.board.global.common.constants.BoardStatus;
 import org.example.board.global.exception.InvalidCustomException;
 import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,7 +30,7 @@ public class BoardController {
 
 	@Operation(summary = "상품 메인 목록 조회 API")
 	@GetMapping(value = "/main/list")
-	public BaseResponse mainList(@RequestHeader("X-User-Idx") Long userIdx, @RequestParam(value = "page", defaultValue = "1") Integer page,
+	public BaseResponse mainList(@RequestHeader(value = "X-User-Idx", required = false) Long userIdx, @RequestParam(value = "page", defaultValue = "1") Integer page,
 		@RequestParam(value = "status", defaultValue = "진행 전") String status) {
 		if (!isValidStatus(status)) {
 			return new BaseResponse(BaseResponseStatus.FAIL);
@@ -118,5 +121,11 @@ public class BoardController {
 		} else {
 			return MAIN_OPEN;
 		}
+	}
+
+	@GetMapping("/test")
+	public ResponseEntity<LocalDateTime> test(){
+		productBoardService.test();
+		return ResponseEntity.ok(LocalDateTime.now());
 	}
 }

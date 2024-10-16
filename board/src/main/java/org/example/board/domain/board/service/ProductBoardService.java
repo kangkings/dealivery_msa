@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ProductBoardService {
+	private final ProductBoardQueueService productBoardQueueService;
 	private final ProductBoardRepository productBoardRepository;
 	private final ProductRepository productRepository;
 	private final ProductThumbnailImageRepository productThumbnailImageRepository;
@@ -83,11 +84,11 @@ public class ProductBoardService {
 
 
 		List<String> productThumbnailUrls = productThumbnailImages.stream()
-			.map(ProductThumbnailImage::getProductThumbnailUrl)
-			.toList();
+				.map(ProductThumbnailImage::getProductThumbnailUrl)
+				.toList();
 		List<ProductDto.Response> productResponse = products.stream()
-			.map(Product::toResponse)
-			.toList();
+				.map(Product::toResponse)
+				.toList();
 		return ProductBoard.toBoardDetailResponse(productBoard, productThumbnailUrls, productResponse);
 	}
 
@@ -98,11 +99,11 @@ public class ProductBoardService {
 
 
 		List<String> productThumbnailUrls = productThumbnailImages.stream()
-			.map(ProductThumbnailImage::getProductThumbnailUrl)
-			.toList();
+				.map(ProductThumbnailImage::getProductThumbnailUrl)
+				.toList();
 		List<ProductDto.Response> productResponse = products.stream()
-			.map(Product::toResponse)
-			.toList();
+				.map(Product::toResponse)
+				.toList();
 		boolean isLiked = likesRepository.existsByProductBoardIdxAndUserIdx(productBoard.getIdx(), userIdx);
 		return productBoard.toBoardDetailResponse(productThumbnailUrls, productResponse, isLiked);
 	}
@@ -116,6 +117,10 @@ public class ProductBoardService {
 		List<Product> savedProducts = saveProduct(boardCreateRequest, savedProductBoard);
 		List<ProductThumbnailImage> productThumbnailImages = saveProductThumbnailImage(boardCreateRequest, thumbnailUrls, savedProductBoard);
 
+		Boolean isCreated = productBoardQueueService.createQueue(savedProductBoard.getIdx(), savedProductBoard.getEndedAt());
+		if (!isCreated) {
+			throw new InvalidCustomException(BaseResponseStatus.PRODUCT_BOARD_QUEUE_CREATE_FAIL);
+		}
 		// 이벤트 발행
 		BoardRegisterEvent event = BoardRegisterEvent.fromEntity(savedProductBoard);
 		boardKafkaProducer.sendBoardRegisterEvent(event);
@@ -133,11 +138,11 @@ public class ProductBoardService {
 		List<Product> products = productRepository.findAllByProductBoardIdx(idx).orElseThrow(() -> new InvalidCustomException(BaseResponseStatus.PRODUCT_BOARD_DETAIL_FAIL));
 
 		List<String> productThumbnailUrls = productThumbnailImages.stream()
-			.map(ProductThumbnailImage::getProductThumbnailUrl)
-			.toList();
+				.map(ProductThumbnailImage::getProductThumbnailUrl)
+				.toList();
 		List<ProductDto.CompanyResponse> productCompanyResponse = products.stream()
-			.map(Product::toCompanyResponse)
-			.toList();
+				.map(Product::toCompanyResponse)
+				.toList();
 		return productBoard.toCompanyBoardDetailResponse(productThumbnailUrls, productCompanyResponse);
 	}
 
@@ -149,22 +154,22 @@ public class ProductBoardService {
 
 	private List<Product> saveProduct(ProductBoardDto.BoardCreateRequest boardCreateRequest, ProductBoard productBoard) {
 		return boardCreateRequest.getProducts().stream()
-			.map(productDto -> productRepository.save(productDto.toEntity(productBoard)))
-			.collect(Collectors.toList());
+				.map(productDto -> productRepository.save(productDto.toEntity(productBoard)))
+				.collect(Collectors.toList());
 	}
 
 	private List<ProductThumbnailImage> saveProductThumbnailImage(ProductBoardDto.BoardCreateRequest boardCreateRequest, List<String> thumbnailUrls, ProductBoard productBoard) {
 
 		return thumbnailUrls.stream()
-			.map(url -> productThumbnailImageRepository.save(boardCreateRequest.toEntity(url, productBoard)))
-			.collect(Collectors.toList());
+				.map(url -> productThumbnailImageRepository.save(boardCreateRequest.toEntity(url, productBoard)))
+				.collect(Collectors.toList());
 	}
 
 
 	private List<String> uploadImage(MultipartFile[] files) {
 		return Arrays.stream(files)
-			.map(this::uploadImage)
-			.collect(Collectors.toList());
+				.map(this::uploadImage)
+				.collect(Collectors.toList());
 	}
 
 	private String uploadImage(MultipartFile file) {
@@ -199,4 +204,5 @@ public class ProductBoardService {
 			throw new InvalidCustomException(BaseResponseStatus.PRODUCT_BOARD_REGISTER_FAIL_UPLOAD_IMAGE);
 		}
 	}
+
 }
