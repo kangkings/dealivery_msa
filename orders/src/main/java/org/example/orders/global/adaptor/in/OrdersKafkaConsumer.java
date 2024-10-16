@@ -3,6 +3,7 @@ package org.example.orders.global.adaptor.in;
 import lombok.*;
 import org.example.orders.domain.board.repository.ProductBoardRepository;
 import org.example.orders.domain.company.model.entity.Company;
+import org.example.orders.domain.company.model.event.CompanyEvent;
 import org.example.orders.domain.company.repository.CompanyRepository;
 import org.example.orders.domain.orders.model.event.OrdersEvent;
 import org.example.orders.domain.product.model.entity.Product;
@@ -39,5 +40,11 @@ public class OrdersKafkaConsumer {
     public void user_signup_complete(UserEvent.UserSignupCompleteEvent userSignupCompleteEvent) {
         User newUser = userSignupCompleteEvent.toEntity();
         userRepository.save(newUser);
+    }
+
+    @KafkaListener(topics = "company_signup_complete", groupId = "orders_group")
+    public void company_signup_complete(CompanyEvent.CompanySignupCompleteEvent companySignupCompleteEvent) {
+        Company newCompany = companySignupCompleteEvent.toEntity();
+        companyRepository.save(newCompany);
     }
 }
