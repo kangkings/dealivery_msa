@@ -23,8 +23,10 @@ public class SecurityConfig {
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable) // httpBasic 비활성화
                 .authorizeExchange(authorize -> authorize
                         .pathMatchers("/api/user/signup","/api/login","/api/logout",
-                                "/api/company/signup").permitAll()
+                                "/api/company/signup","/api/company/email/verify","/api/user/email/verify",
+                                "/api/user/social/signup").permitAll()
                         .pathMatchers("/api/user/**").hasRole("USER") // /user/** 경로는 ROLE_USER 권한 필요
+                        .pathMatchers("/api/orders/**").authenticated()
                         .anyExchange().permitAll() // 나머지 요청은 인증 필요
                 );
         http.addFilterBefore(jwtFilter, SecurityWebFiltersOrder.AUTHENTICATION);

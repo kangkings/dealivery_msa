@@ -24,11 +24,11 @@ spring:
         - id: user-service-route
           uri: lb://user-service
           predicates:
-            - Path=/api/user/**, /api/company/**
+            - Path=/api/user/**, /api/company/**, /api/delivery/**
         - id: auth-service-route
           uri: lb://auth-service
           predicates:
-            - Path=/api/login, /api/logout, /api/oauth/**, /api/auth/**
+            - Path=/api/login, /api/logout, /api/oauth/**, /api/auth/**, /api/kakao/**
         - id: order-service-route
           uri: lb://order-service
           predicates:

@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final int COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
-    private RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
 
@@ -64,12 +64,12 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
                 //RefreshToken 엔티티 저장 (기존값 있으면 삭제)
                 try {
-                    Object existingRefreshToken = redisTemplate.opsForValue().get(RedisKeys.USER_REFRESH_TOKEN.getKey() +email);
+                    Object existingRefreshToken = redisTemplate.opsForValue().get(RedisKeys.USER_REFRESH_TOKEN.getKey() +user.getEmail());
                     if ( existingRefreshToken != null){
-                        redisTemplate.delete(RedisKeys.USER_REFRESH_TOKEN.getKey()+email);
+                        redisTemplate.delete(RedisKeys.USER_REFRESH_TOKEN.getKey()+user.getEmail());
                     }
 
-                    redisTemplate.opsForValue().set(RedisKeys.USER_REFRESH_TOKEN.getKey()+email, refreshToken,jwtUtil.getREFRESH_EXPIRE(), TimeUnit.MILLISECONDS);
+                    redisTemplate.opsForValue().set(RedisKeys.USER_REFRESH_TOKEN.getKey()+user.getEmail(), refreshToken,jwtUtil.getREFRESH_EXPIRE(), TimeUnit.MILLISECONDS);
 
                     createTokenCookies(response, accessToken, refreshToken, "user");
                     getRedirectStrategy().sendRedirect(request, response,

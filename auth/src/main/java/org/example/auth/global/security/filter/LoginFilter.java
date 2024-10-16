@@ -127,11 +127,11 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
         // RefreshToken 엔티티 저장 (기존값 있으면 삭제)
         try {
-            Object existingRefreshToken = redisTemplate.opsForValue().get(RedisKeys.COMPANY_REFRESH_TOKEN +email);
+            Object existingRefreshToken = redisTemplate.opsForValue().get(RedisKeys.COMPANY_REFRESH_TOKEN.getKey() +email);
             if ( existingRefreshToken != null){
-                redisTemplate.delete(RedisKeys.COMPANY_REFRESH_TOKEN+email);
+                redisTemplate.delete(RedisKeys.COMPANY_REFRESH_TOKEN.getKey()+email);
             }
-            redisTemplate.opsForValue().set(RedisKeys.COMPANY_REFRESH_TOKEN+email, refreshToken,jwtUtil.getREFRESH_EXPIRE(), TimeUnit.MILLISECONDS);
+            redisTemplate.opsForValue().set(RedisKeys.COMPANY_REFRESH_TOKEN.getKey()+email, refreshToken,jwtUtil.getREFRESH_EXPIRE(), TimeUnit.MILLISECONDS);
 
             // 쿠키 설정
             createTokenCookies(response, accessToken, refreshToken, "company");

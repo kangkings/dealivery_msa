@@ -3,6 +3,7 @@ package org.example.user.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
 // import org.example.backend.domain.delivery.repository.DeliveryRepository;
+import org.example.user.domain.delivery.repository.DeliveryRepository;
 import org.example.user.domain.user.model.dto.UserDto;
 import org.example.user.domain.user.model.entity.User;
 import org.example.user.domain.user.repository.UserRepository;
@@ -20,7 +21,7 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
- //   private final DeliveryRepository deliveryRepository;
+    private final DeliveryRepository deliveryRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserKafkaProducer userKafkaProducer;
 
@@ -43,7 +44,7 @@ public class UserService {
     @Transactional
     public boolean signup(UserDto.UserSignupRequest request) {
         User newUser = userRepository.save(request.toEntity(passwordEncoder.encode(request.getPassword())));
-
+        deliveryRepository.save(request.toDeliveryEntity(newUser));
         userKafkaProducer.sendSignupMessage(newUser.toUserSignupComplete());
         return true;
     }
@@ -51,7 +52,8 @@ public class UserService {
     @Transactional
     public boolean socialSignup(UserDto.SocialSignupRequest socialSignupRequest) {
         User newUser = userRepository.save(socialSignupRequest.toEntity());
-//        deliveryRepository.save(socialSignupRequest.toDeliveryEntity(newUser));
+        deliveryRepository.save(socialSignupRequest.toDeliveryEntity(newUser));
+        userKafkaProducer.sendSignupMessage(newUser.toUserSignupComplete());
         return true;
     }
 
