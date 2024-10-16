@@ -18,10 +18,6 @@ public class BoardKafkaConsumer {
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
 
-    @KafkaListener(topics = "board-register", groupId = "board_group")
-    public void consumeBoardRegisterEvent(BoardRegisterEvent event) {
-    }
-
     @KafkaListener(topics = "user_signup_complete", groupId = "board_group")
     public void user_signup_complete(UserDto.UserSignupComplete userSignupComplete) {
         User newUser = userSignupComplete.toEntity();
