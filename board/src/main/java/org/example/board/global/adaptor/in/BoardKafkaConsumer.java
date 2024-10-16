@@ -11,13 +11,8 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class BoardKafkaConsumer {
 
-    private final ProductBoardRepository productBoardRepository;
-
     @KafkaListener(topics = "board-register", groupId = "board_group")
     public void consumeBoardRegisterEvent(BoardRegisterEvent event) {
-        // 이벤트를 ProductBoard로 변환 후 저장
-        ProductBoard productBoard = event.toEntity();
-        productBoardRepository.save(productBoard);
     }
 }
 
