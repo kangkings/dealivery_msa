@@ -209,8 +209,10 @@ public class UserDto {
     @Builder
     public static class UserSignupComplete{
         private Long idx;
+        private String name;
         private String email;
         private String password;
+        private Long point;
         private String role;
         private String type;
     }
