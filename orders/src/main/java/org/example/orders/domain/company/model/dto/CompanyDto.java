@@ -6,12 +6,5 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 public class CompanyDto {
-    @Getter
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Builder
-    public static class CompanySignupComplete {
-        private Long idx;
-//        private List<ProductBoardDto.ProductBoardResponse> productBoards;
-    }
+
 }
