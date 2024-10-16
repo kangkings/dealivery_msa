@@ -171,8 +171,8 @@ public class ProductBoard {
 				.build();
 	}
 
-	public ProductBoardEvent.BoardRegisterEvent toDto(List<Product> savedProducts) {
-		return ProductBoardEvent.BoardRegisterEvent.builder()
+	public ProductBoardEvent.BoardRegisterCompleteEvent toDto(List<Product> savedProducts) {
+		return ProductBoardEvent.BoardRegisterCompleteEvent.builder()
 				.title(this.title)
 				.companyIdx(this.company.getIdx())
 				.discountRate(this.discountRate)

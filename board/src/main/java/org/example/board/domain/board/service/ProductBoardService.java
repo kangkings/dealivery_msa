@@ -122,8 +122,8 @@ public class ProductBoardService {
 			throw new InvalidCustomException(BaseResponseStatus.PRODUCT_BOARD_QUEUE_CREATE_FAIL);
 		}
 		// 이벤트 발행
-		ProductBoardEvent.BoardRegisterEvent event = savedProductBoard.toDto(savedProducts);
-		boardKafkaProducer.sendBoardRegisterEvent(event);
+		ProductBoardEvent.BoardRegisterCompleteEvent event = savedProductBoard.toDto(savedProducts);
+		boardKafkaProducer.sendBoardRegisterCompleteEvent(event);
 	}
 
 	// 판매자 게시글 조회

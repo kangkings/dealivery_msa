@@ -12,7 +12,7 @@ public class ProductBoardEvent {
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class BoardRegisterEvent {
+    public static class BoardRegisterCompleteEvent {
         private Long idx;
         private String title;
         private Long companyIdx;

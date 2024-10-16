@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 public class BoardKafkaProducer {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    public void sendBoardRegisterEvent(ProductBoardEvent.BoardRegisterEvent event) {
-        kafkaTemplate.send("board-register", event);
+    public void sendBoardRegisterCompleteEvent(ProductBoardEvent.BoardRegisterCompleteEvent boardRegisterCompleteEvent) {
+        kafkaTemplate.send("board-register", boardRegisterCompleteEvent);
     }
 }
 
