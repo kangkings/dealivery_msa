@@ -38,4 +38,9 @@ public class CompanyService {
         companyKafkaProducer.sendSignupMessage(newCompany.toCompanySignupComplete());
         return true;
     }
+
+    public Long getCurrentCompanyIdx(Long companyId) {
+        Optional<Company> company = companyRepository.findById(companyId);
+        return company.map(Company::getIdx).orElseThrow(() -> new IllegalArgumentException("Company 찾을 수 없음"));
+    }
 }

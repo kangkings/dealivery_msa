@@ -16,10 +16,7 @@ import org.example.user.global.common.constants.BaseResponseStatus;
 import org.example.user.global.common.constants.SwaggerDescription;
 import org.example.user.global.common.constants.SwaggerExamples;
 import org.example.user.global.exception.InvalidCustomException;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/company")
@@ -73,5 +70,10 @@ public class CompanyController {
             return new BaseResponse(BaseResponseStatus.FAIL);
         }
         return new BaseResponse();
+    }
+
+    @GetMapping("/company-idx")
+    public Long getCompanyIdx(@RequestParam Long companyId) {
+        return companyService.getCurrentCompanyIdx(companyId);  // 주어진 회사 ID로 회사 정보를 반환
     }
 }
