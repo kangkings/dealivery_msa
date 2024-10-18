@@ -17,6 +17,7 @@ import org.example.board.domain.board.repository.ProductBoardRepository;
 import org.example.board.domain.board.repository.ProductThumbnailImageRepository;
 import org.example.board.domain.likes.repository.LikesRepository;
 import org.example.board.global.adaptor.out.BoardKafkaProducer;
+import org.example.board.global.adaptor.out.UserServiceClient;
 import org.example.board.global.common.constants.BaseResponseStatus;
 import org.example.board.global.common.constants.BoardStatus;
 import org.example.board.global.exception.InvalidCustomException;
@@ -50,6 +51,7 @@ public class ProductBoardService {
 	private String bucket;
 
 	private final BoardKafkaProducer boardKafkaProducer;
+	private final UserServiceClient userServiceClient;
 
 	public Slice<ProductBoardDto.BoardListResponse> mainList(String status, Pageable pageable) {
 		Slice<ProductBoard> productBoards = productBoardRepository.searchByStatus(BoardStatus.from(status).getStatus(), pageable);
@@ -112,8 +114,17 @@ public class ProductBoardService {
 	public void create(Long companyIdx, ProductBoardDto.BoardCreateRequest boardCreateRequest, MultipartFile[] productThumbnails, MultipartFile productDetail) {
 		List<String> thumbnailUrls = uploadImage(productThumbnails);
 		String productDetailUrl = uploadImage(productDetail);
+		ProductBoard savedProductBoard;
 
-		ProductBoard savedProductBoard = saveProductBoard(companyIdx, boardCreateRequest, thumbnailUrls.get(0), productDetailUrl);
+		// companyIdx가 null인 경우 user 모듈로부터 조회
+		try {
+			savedProductBoard = saveProductBoard(companyIdx, boardCreateRequest, thumbnailUrls.get(0), productDetailUrl);
+		} catch (Exception e) {
+			// 회원 마이크로 서비스에서 Company의 필요한 정보 알아와서 Company 정보 저장하고
+			companyIdx = userServiceClient.getCompanyIdx();  // UserServiceClient 호출
+			savedProductBoard = saveProductBoard(companyIdx, boardCreateRequest, thumbnailUrls.get(0), productDetailUrl);
+		}
+
 		List<Product> savedProducts = saveProduct(boardCreateRequest, savedProductBoard);
 		List<ProductThumbnailImage> productThumbnailImages = saveProductThumbnailImage(boardCreateRequest, thumbnailUrls, savedProductBoard);
 
@@ -130,6 +141,7 @@ public class ProductBoardService {
 		ProductBoardEvent.BoardRegisterCompleteEvent event = savedProductBoard.toDto(registeredProducts);
 		boardKafkaProducer.sendBoardRegisterCompleteEvent(event);
 	}
+
 
 	// 판매자 게시글 조회
 	public Page<ProductBoardDto.CompanyBoardListResponse> companyList(Long companyIdx, String status, Integer month, Pageable pageable) {
