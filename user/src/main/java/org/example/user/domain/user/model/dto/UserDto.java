@@ -171,7 +171,7 @@ public class UserDto {
     @AllArgsConstructor
     @Builder
     public static class UserDetailResponse{
-        private Long idx;
+        private Long userIdx;
         private String name;
         private String email;
         private String address;
@@ -210,7 +210,7 @@ public class UserDto {
     @AllArgsConstructor
     @Builder
     public static class UserSignupComplete{
-        private Long idx;
+        private Long userIdx;
         private String name;
         private String email;
         private String password;

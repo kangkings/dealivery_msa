@@ -70,7 +70,7 @@ public class User {
 
     public UserDto.UserDetailResponse toUserDetailResponse(){
         return UserDto.UserDetailResponse.builder()
-                .idx(this.idx)
+                .userIdx(this.idx)
                 .name(this.name)
                 .email(this.email)
                 .address(this.address)
@@ -91,7 +91,7 @@ public class User {
 
     public UserDto.UserSignupComplete toUserSignupComplete(){
         return UserDto.UserSignupComplete.builder()
-                .idx(this.idx)
+                .userIdx(this.idx)
                 .name(this.name)
                 .email(this.email)
                 .password(this.password)

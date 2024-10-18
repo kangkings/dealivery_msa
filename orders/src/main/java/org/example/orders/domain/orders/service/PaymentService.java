@@ -1,10 +1,5 @@
 package org.example.orders.domain.orders.service;
 
-import static org.example.orders.global.constants.BaseResponseStatus.ORDER_CREATE_FAIL_LACK_STOCK;
-import static org.example.orders.global.constants.BaseResponseStatus.ORDER_FAIL_PRODUCT_NOT_FOUND;
-import static org.example.orders.global.constants.BaseResponseStatus.ORDER_PAYMENT_CANCEL_FAILED;
-import static org.example.orders.global.constants.BaseResponseStatus.ORDER_VALIDATION_FAIL_PRICE_MISMATCH;
-
 import com.google.gson.Gson;
 import com.siot.IamportRestClient.IamportClient;
 import com.siot.IamportRestClient.exception.IamportResponseException;
@@ -16,12 +11,16 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.orders.domain.product.model.dto.ProductDto;
 import org.example.orders.domain.product.model.entity.Product;
 import org.example.orders.domain.product.repository.ProductRepository;
 import org.example.orders.domain.orders.model.entity.OrderedProduct;
 import org.example.orders.domain.orders.model.entity.Orders;
+import org.example.orders.global.adaptor.out.BoardServiceClient;
 import org.example.orders.global.constants.BaseResponseStatus;
 import org.example.orders.global.exception.InvalidCustomException;
 import org.springframework.stereotype.Service;
@@ -33,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentService {
     private final IamportClient iamportClient;
     private final ProductRepository productRepository;
+    private final BoardServiceClient boardServiceClient;
 
     public Payment getPaymentInfo(String impUid) throws IamportResponseException, IOException {
         IamportResponse<Payment> iamportResponse = iamportClient.paymentByImpUid(impUid);
@@ -89,6 +89,14 @@ public class PaymentService {
             totalPrice.updateAndGet(v -> (long) (v + (originalPrice * quantity * (1 - discountRate / 100.0))));
 
         });
+
+        List<ProductDto.OrderedProductInfo> orderedProductInfoList = orderedProducts.stream()
+                .map(OrderedProduct::toOrderedProductInfo)
+                .collect(Collectors.toList());
+        //게시글 서비스에 재고 감소 요청 실패시 예외처리
+        if (!boardServiceClient.isStockDecreased(orderedProductInfoList)){
+            throw new InvalidCustomException(BaseResponseStatus.ORDER_FAIL_STOCK_DECREASE_FAIL);
+        }
 
         return totalPrice;
     }

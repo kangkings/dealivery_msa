@@ -1,35 +1,44 @@
 package com.example.quequeflow.domain.queue.service;
 
-import java.time.Duration;
+
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 
+import org.redisson.api.RScoredSortedSet;
+import org.redisson.api.RedissonClient;
+import org.redisson.client.RedisException;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.Cursor;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
-import com.example.quequeflow.global.common.constants.BaseResponseStatus;
-import com.example.quequeflow.global.exception.InvalidCustomException;
-
 import lombok.RequiredArgsConstructor;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class QueueService {
-	private final RedisTemplate<String, String> redisTemplate;
+
+	// Redisson 클라이언트: 쓰기 작업용
+	@Qualifier("writeRedissonClient")
+	private final RedissonClient writeRedissonClient;
+
+	// Redisson 클라이언트: 읽기 작업용
+	@Qualifier("readRedissonClient")
+	private final RedissonClient readRedissonClient;
+
 	// 대기 큐
 	private final String USER_QUEUE_WAIT_KEY = "queue:wait";
 	// 진행 큐
 	private final String USER_QUEUE_PROCEED_KEY = "queue:proceed";
+
+	private final long NANO_SECONDS = 1000000000l;
+
 	@Value("${queue.proceed.max-size}")
 	private int MAX_PROCEED_SIZE;
 
@@ -38,100 +47,101 @@ public class QueueService {
 
 	private final String DUMMY_KEY = "dummy";
 
+	// 쓰기 작업 : 대기열 생성
 	public Boolean createQueue(Long boardIdx, LocalDateTime endedAt) {
 		String waitQueueKey = USER_QUEUE_WAIT_KEY + ":" + boardIdx;
 		String processedQueueKey = USER_QUEUE_PROCEED_KEY + ":" + boardIdx;
-		LocalDateTime endedAtPlusMinutes = endedAt.plusMinutes(10);
-		long unixTimestamp = endedAtPlusMinutes.toInstant(ZoneOffset.UTC).getEpochSecond();
+
+		// endedAt에서 미세한 시간 차이를 추가한 점수 부여 (나노초 단위로 계산)
+		Instant inst = endedAt.plusMinutes(10).toInstant(ZoneOffset.UTC);
+		long time = convertSecondToNano(inst, 0);
+
+		// Redisson의 ScoredSortedSet을 사용하여 대기열 생성, StringCodec을 사용
+		RScoredSortedSet<String> waitQueue = writeRedissonClient.getScoredSortedSet(waitQueueKey);
+		RScoredSortedSet<String> processedQueue = writeRedissonClient.getScoredSortedSet(processedQueueKey);
 
 		// 더미 데이터를 ZSet에 추가
-		boolean addedToWaitQueue = Boolean.TRUE.equals(redisTemplate.opsForZSet().add(waitQueueKey, "dummy", unixTimestamp));
-		boolean addedToProcessedQueue = Boolean.TRUE.equals(redisTemplate.opsForZSet().add(processedQueueKey, "dummy", unixTimestamp));
+		boolean addedToWaitQueue = waitQueue.add(time, DUMMY_KEY);
+		boolean addedToProcessedQueue = processedQueue.add(time, DUMMY_KEY);
 
-		// endedAt에 1분 추가
-		LocalDateTime expirationTime = endedAt.plusMinutes(1);
-		long expirationTimeInSeconds = Duration.between(LocalDateTime.now(), expirationTime).getSeconds();
-
-		// 만료 시간 설정
-		if (addedToWaitQueue) {
-			redisTemplate.expire(waitQueueKey, expirationTimeInSeconds, TimeUnit.SECONDS);
-		}
-		if (addedToProcessedQueue) {
-			redisTemplate.expire(processedQueueKey, expirationTimeInSeconds, TimeUnit.SECONDS);
+		// endedAt을 기준으로 만료 시간 설정 (ZSet 만료 시간 = endedAt에서 현재 시간까지의 시간)
+		long ttl = endedAt.toInstant(ZoneOffset.UTC).getEpochSecond() - Instant.now().getEpochSecond();
+		if (ttl > 0) {
+			waitQueue.expire(ttl, TimeUnit.SECONDS);
+			processedQueue.expire(ttl, TimeUnit.SECONDS);
 		}
 
 		return addedToWaitQueue && addedToProcessedQueue;
 	}
 
-
-	// **쿠키값 없고 대기열 등록 안돼있을 때** 대기열 등록하는 메소드
+	// 쓰기 작업 : 쿠키값 없고 대기열 등록 안돼있을 때, 대기열 등록하는 메소드
 	public Long registerWaitQueue(final Long boardIdx, final Long userIdx) {
 		String queueKey = choiceQueue(boardIdx);
-		long unixTimestamp = Instant.now().getEpochSecond();
+		RScoredSortedSet<String> queue = writeRedissonClient.getScoredSortedSet(queueKey);
 
-		// 1. 대기 없이 바로 진입
+		// 미세한 시간 차이를 추가한 점수 부여 (현재 타임스탬프에 사용자 ID를 더하는 방식)
+		Instant inst = Instant.now();
+
+		// 대기 없이 바로 진입
 		if (queueKey.equals(getProceedQueueKey(boardIdx))) {
-			redisTemplate.opsForZSet().add(queueKey, userIdx.toString(), unixTimestamp);
+			long time = convertSecondToNano(inst, 180);
+			queue.add(time, userIdx.toString());
 			return -1L;
 		}
 
-		// 2. 대기 존재
-		// key: 대기열 키, value: {유저 id, 유닉스 타임 스탬프} 기준으로 Redis에 등록
-		Boolean added = redisTemplate.opsForZSet().add(queueKey, userIdx.toString(), unixTimestamp);
+		// 대기 존재 시 등록
+		long time = convertSecondToNano(inst, 0);
+		boolean added = queue.add(time, userIdx.toString());
 
-		// 이미 등록되어 있으면 예외 발생 시킴 -> registerWaitQueue 호출한 try catch의 catch로 이동
-		if (Boolean.FALSE.equals(added)) {
-			throw new InvalidCustomException(BaseResponseStatus.QUEUE_ALREADY_REGISTERED_USER);
+		if (!added) {
+			throw new RuntimeException("User already registered in queue");
 		}
 
 		// 현재 순위 반환
-		Long rank = redisTemplate.opsForZSet().rank(queueKey, userIdx.toString());
+		Long rank = Long.valueOf(queue.rank(userIdx.toString()));
 		return (rank != null && rank >= 0) ? rank + 1 : -1;
 	}
 
+	// 쓰기 작업: 대기열에서 사용자 삭제
 	public boolean removeUserFromQueue(Long boardIdx, Long userIdx) {
-		Long removedCount = 0L;
+		RScoredSortedSet<String> waitQueue = writeRedissonClient.getScoredSortedSet(getWaitQueueKey(boardIdx));
+		RScoredSortedSet<String> proceedQueue = writeRedissonClient.getScoredSortedSet(getProceedQueueKey(boardIdx));
 
-		if (isUserInProcceedQueue(boardIdx, userIdx)) { // 사용자가 진행 큐에 있을 때
-			String proceedQueueKey = getProceedQueueKey(boardIdx);
-			removedCount = redisTemplate.opsForZSet().remove(proceedQueueKey, userIdx.toString());
+		boolean removedCount;
+		if (isUserInProcceedQueue(boardIdx, userIdx)) {
+			removedCount = proceedQueue.remove(userIdx.toString());
+		} else {
+			removedCount = waitQueue.remove(userIdx.toString());
 		}
-		else { // 사용자가 대기 큐에 있을 때
-			String waitQueueKey = getWaitQueueKey(boardIdx);
-			removedCount = redisTemplate.opsForZSet().remove(waitQueueKey, userIdx.toString());
-		}
 
-		System.out.println("지워진 갯수 :: " + removedCount);
-
-
-		return (removedCount != null && removedCount > 0);
+		return removedCount;
 	}
 
-
+	// 읽기 작업: 큐 선택
 	private String choiceQueue(Long boardIdx) {
 		String waitQueueKey = getWaitQueueKey(boardIdx);
 		String proceedQueueKey = getProceedQueueKey(boardIdx);
-		Long waitQueueCount = getCount(waitQueueKey);
-		Long proceedQueueCount = getCount(proceedQueueKey);
 
-		if (waitQueueCount == 1 && proceedQueueCount < MAX_PROCEED_SIZE) {
+		RScoredSortedSet<String> waitQueue = readRedissonClient.getScoredSortedSet(waitQueueKey);
+		RScoredSortedSet<String> proceedQueue = readRedissonClient.getScoredSortedSet(proceedQueueKey);
+
+		if (waitQueue.size() == 1 && proceedQueue.size() < MAX_PROCEED_SIZE) {
 			return proceedQueueKey;
 		}
 		return waitQueueKey;
 	}
 
-	private Long getCount(String waitQueueKey) {
-		Long queueCount = redisTemplate.opsForZSet().zCard(waitQueueKey);
-		if (queueCount == null) {
-			return 0L;
-		}
-		return queueCount;
+	// 읽기 작업: 큐의 사용자 수 반환
+	private Long getCount(String queueKey) {
+		RScoredSortedSet<String> queue = readRedissonClient.getScoredSortedSet(queueKey);
+		return (long) queue.size();  // ZSet에서 요소의 개수를 반환
 	}
 
-	// 현재 순위 반환
+
+	// 읽기 작업: 현재 순위 반환
 	public Long getRank(final Long boardIdx, final Long userIdx) {
-		String waitQueueKey = getWaitQueueKey(boardIdx);
-		Long rank = redisTemplate.opsForZSet().rank(waitQueueKey, userIdx.toString());
+		RScoredSortedSet<String> waitQueue = readRedissonClient.getScoredSortedSet(getWaitQueueKey(boardIdx));
+		Long rank = Long.valueOf(waitQueue.rank(userIdx.toString()));
 		return (rank != null && rank >= 0) ? rank + 1 : -1;
 	}
 
@@ -155,55 +165,86 @@ public class QueueService {
 		return null;
 	}
 
+	// 읽기 작업: 진행 큐의 키들 가져오기
 	public Set<String> getProceedQueueKeys() {
 		Set<String> keys = new HashSet<>();
 
-		ScanOptions scanOptions = ScanOptions.scanOptions().match("queue:proceed*").count(1000).build();
-		Cursor<byte[]> cursor = redisTemplate.getConnectionFactory().getConnection().scan(scanOptions);
-
-		while (cursor.hasNext()) {
-			keys.add(new String(cursor.next()));
-		}
-
-		cursor.close();
+		Iterable<String> resultKeys = readRedissonClient.getKeys().getKeysByPattern("queue:proceed*");
+		resultKeys.forEach(keys::add);
 
 		return keys;
 	}
 
-	public Long allowUser(final Long boardIdx, final Long count) { // 상위 (0 부터 count-1) count명의 유저를 뽑음
-
-		String waiteQueueKey = getWaitQueueKey(boardIdx);
+	// 쓰기 작업: 진행 큐로 사용자 이동
+	public Long allowUser(final Long boardIdx, final Integer count) {
+		String waitQueueKey = getWaitQueueKey(boardIdx);
 		String proceedQueueKey = getProceedQueueKey(boardIdx);
 
+		RScoredSortedSet<String> waitQueue = writeRedissonClient.getScoredSortedSet(waitQueueKey);
+		RScoredSortedSet<String> proceedQueue = writeRedissonClient.getScoredSortedSet(proceedQueueKey);
 
-		Set<String> members = redisTemplate.opsForZSet().range(waiteQueueKey, 0, count - 1);
-
+		// 상위 count명의 유저를 추출
+		Collection<String> members = waitQueue.valueRange(0, count - 1);
 
 		if (members == null || members.isEmpty()) {
 			return 0L;
 		}
 
-		for (String member : members) { // 대기 큐에서 삭제하고, proceed로 이동ㅅ킴
-
+		for (String member : members) {
 			if (DUMMY_KEY.equals(member)) {
 				continue;
 			}
 
-			redisTemplate.opsForZSet().remove(waiteQueueKey, member);
-			redisTemplate.opsForZSet().add(proceedQueueKey, member, Instant.now().getEpochSecond());
+			waitQueue.remove(member);  // 대기 큐에서 삭제
+
+			Instant instant = Instant.now();
+			long score = convertSecondToNano(instant, 180);
+			proceedQueue.add(score, member);  // 진행 큐로 이동
 		}
 
 		return (long) members.size();
 	}
 
+	// 읽기 작업 : 진행 큐에 사용자가 있는지 확인
 	public boolean isUserInProcceedQueue(Long boardIdx, Long userIdx) {
-		String proceedQueueKey = getProceedQueueKey(boardIdx);
-
-		Long rank = redisTemplate.opsForZSet().rank(proceedQueueKey, userIdx.toString());
-
-		return rank != null;
+		RScoredSortedSet<String> proceedQueue = readRedissonClient.getScoredSortedSet(getProceedQueueKey(boardIdx));
+		return proceedQueue.contains(userIdx.toString());
 	}
 
+	public void removeExpiredEntries(Set<String> proceedQueueKeys) {
+		// 현재 Unix 타임스탬프를 가져옴
+		Instant instant = Instant.now();
+		long currentTime = convertSecondToNano(instant, 0);
+
+		for (String proceedQueueKey : proceedQueueKeys) {
+			try {
+				// Redisson을 사용하여 ZSet을 가져옴
+				RScoredSortedSet<String> proceedQueue = writeRedissonClient.getScoredSortedSet(proceedQueueKey);
+
+				// 현재 시간보다 score 값이 작은 요소들을 삭제
+				int removedCount = proceedQueue.removeRangeByScore(
+						0.0, true, // 시작 범위 0, inclusive (포함)
+						(double) currentTime, true // 종료 범위 현재 시간, inclusive (포함)
+				);
+
+				log.info("Removed {} expired entries from proceed queue: {}", removedCount, proceedQueueKey);
+			} catch (RedisException e) {
+				log.error("Error while removing expired entries from queue: {}", proceedQueueKey, e);
+			}
+		}
+	}
+
+	public long convertSecondToNano(Instant inst, long expiredTime){
+		long time = inst.getEpochSecond();
+		time *= NANO_SECONDS;
+		time += inst.getNano();
+
+		expiredTime *= NANO_SECONDS;
+
+		time += expiredTime;
+
+		return time;
+	}
 
 	@Scheduled(fixedRateString = "${queue.delay}")
 	public void scheduleAllowUser() {
@@ -211,15 +252,13 @@ public class QueueService {
 		log.info("called scheduling...");
 		Set<String> proccedQueueKeys = getProceedQueueKeys();
 
-		for (String key : proccedQueueKeys) {
-			if (DUMMY_KEY.equals(key)) {
-				continue;
-			}
+		removeExpiredEntries(proccedQueueKeys);
 
+		for (String key : proccedQueueKeys) {
 			Long cnt = getCount(key);
 			if(cnt < MAX_ALLOW_USER_CNT) {
 				Long boardIdx = extractBoardIdxFromKey(key);
-				this.allowUser(boardIdx, MAX_ALLOW_USER_CNT - cnt); // 여유분 만큼 진행큐로 이동
+				this.allowUser(boardIdx, (int) (MAX_ALLOW_USER_CNT - cnt)); // 여유분 만큼 진행큐로 이동
 			}
 		}
 	}

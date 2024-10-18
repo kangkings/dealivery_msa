@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.board.domain.board.model.dto.ProductBoardDto;
+import org.example.board.domain.board.product.model.dto.ProductDto;
 import org.example.board.domain.board.service.ProductBoardService;
 import org.example.board.global.common.constants.BaseResponse;
 import org.example.board.global.common.constants.BaseResponseStatus;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -122,4 +124,16 @@ public class BoardController {
 			return MAIN_OPEN;
 		}
 	}
+
+	@PostMapping("/decrease/stock")
+	public Boolean decreaseStock(@RequestBody List<ProductDto.OrderedProduct> orderedProducts){
+		return productBoardService.decreaseStcok(orderedProducts);
+	}
+
+	@PostMapping("/restore/stock")
+	public Boolean restoreStock(@RequestBody List<ProductDto.OrderedProduct> orderedProducts){
+		return productBoardService.restoreStcok(orderedProducts);
+	}
+
+
 }

@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.orders.domain.board.model.entity.ProductBoard;
 import org.example.orders.domain.company.model.entity.Company;
+import org.example.orders.domain.product.model.dto.ProductDto;
 
 @Entity
 @Getter
