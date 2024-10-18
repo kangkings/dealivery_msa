@@ -168,9 +168,6 @@ public class ProductBoardService {
 	}
 
 	private ProductBoard saveProductBoard(Long companyIdx, ProductBoardDto.BoardCreateRequest boardCreateRequest, String productThumbnailUrl, String productDetailUrl) {
-		if (true){
-			throw new RuntimeException();
-		}
 		Category category = categoryRepository.findByName(boardCreateRequest.getCategory().getType());
 		ProductBoard productBoard = boardCreateRequest.toEntity(companyIdx, productThumbnailUrl, productDetailUrl, category);
 		return productBoardRepository.save(productBoard);
