@@ -102,6 +102,9 @@ public enum BaseResponseStatus {
     ORDER_FAIL_PRODUCT_NOT_FOUND(false, 3015, "주문에 실패했습니다. 해당하는 상품을 찾을 수 없습니다."),
     ORDER_FAIL_PAYMENT_NOT_FOUND(false, 3016, "주문에 실패했습니다. 결제 정보를 찾을 수 없습니다."),
     ORDER_PAYMENT_CANCEL_FAILED(false, 3017,"결제 취소 요청 중 오류가 발생했습니다. 관리자에게 문의해주세요."),
+    ORDER_FAIL_STOCK_DECREASE_FAIL(false, 3018,"주문 중 오류가 발생했습니다. 관리자에게 문의해주세요."),
+    ORDER_FAIL_STOCK_RESTORE_FAIL(false, 3019,"주문 중 오류가 발생했습니다. 관리자에게 문의해주세요."),
+
 
     // 상품게시글 기능 4000
     PRODUCT_BOARD_REGISTER_FAIL_EMPTY_TITLE(false, 4000, "상품게시글 등록에 실패했습니다. 제목을 입력해주세요"),

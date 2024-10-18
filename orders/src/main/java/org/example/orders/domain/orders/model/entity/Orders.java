@@ -20,7 +20,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import org.example.orders.domain.delivery.model.entity.Delivery;
 import org.example.orders.domain.board.model.entity.ProductBoard;
 import org.example.orders.domain.user.model.entity.User;
 import org.example.orders.global.constants.OrderStatus;

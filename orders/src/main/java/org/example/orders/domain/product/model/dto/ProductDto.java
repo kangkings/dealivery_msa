@@ -32,4 +32,14 @@ public class ProductDto {
                     .build();
         }
     }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class OrderedProductInfo{
+        private Long idx;
+
+        private Integer quantity;
+    }
 }

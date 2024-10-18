@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.orders.domain.board.model.entity.ProductBoard;
+import org.example.orders.domain.product.model.dto.ProductDto;
 import org.example.orders.domain.product.model.entity.Product;
 import org.example.orders.domain.orders.model.dto.OrderedProductDto;
 
@@ -37,6 +38,13 @@ public class OrderedProduct {
                 .name(product.getName())
                 .amount(quantity)
                 .price(Math.round(product.getPrice() * quantity * (1 - discountRate / 100.0)))
+                .build();
+    }
+
+    public ProductDto.OrderedProductInfo toOrderedProductInfo(){
+        return ProductDto.OrderedProductInfo.builder()
+                .idx(this.productIdx)
+                .quantity(this.quantity)
                 .build();
     }
 }

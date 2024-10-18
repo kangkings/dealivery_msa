@@ -55,7 +55,7 @@ public class QueueController {
 		}
 
 		Long rank = queueService.getRank(boardIdx, userIdx);
-		QueueDto.QueueRankResponse res = QueueRankResponse.builder().rank(rank).build();
+		QueueRankResponse res = QueueRankResponse.builder().rank(rank).build();
 
 		return new BaseResponse(BaseResponseStatus.WAITING_IN_QUEUE, res);
 	}

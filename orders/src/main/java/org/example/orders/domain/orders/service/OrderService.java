@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.orders.domain.board.model.entity.ProductBoard;
 import org.example.orders.domain.company.repository.CompanyRepository;
+import org.example.orders.domain.product.model.dto.ProductDto;
 import org.example.orders.domain.product.model.entity.Product;
 import org.example.orders.domain.product.repository.ProductRepository;
 import org.example.orders.domain.board.repository.ProductBoardRepository;
@@ -22,6 +23,8 @@ import org.example.orders.domain.orders.repository.OrderedProductRepository;
 import org.example.orders.domain.orders.repository.OrdersRepository;
 import org.example.orders.domain.user.model.entity.User;
 import org.example.orders.domain.user.repository.UserRepository;
+import org.example.orders.global.adaptor.out.BoardServiceClient;
+import org.example.orders.global.adaptor.out.UserServiceClient;
 import org.example.orders.global.constants.BaseResponseStatus;
 import org.example.orders.global.constants.OrderStatus;
 import org.example.orders.global.exception.InvalidCustomException;
@@ -48,6 +51,7 @@ public class OrderService {
     private final OrderedProductRepository orderedProductRepository;
     private final ProductRepository productRepository;
     private final ProductBoardRepository productBoardRepository;
+    private final BoardServiceClient boardServiceClient;
 
     @Transactional
     public OrderDto.OrderCreateResponse register(Long userIdx, OrderDto.OrderRegisterRequest request) {
@@ -62,7 +66,7 @@ public class OrderService {
                 .collect(Collectors.toList());
 
         orderedProductRepository.saveAll(orderedProducts);
-        //이벤트 발행 -> 재고 줄여라
+
         return OrderDto.OrderCreateResponse.builder()
                 .orderIdx(order.getIdx())
                 .build();
@@ -116,6 +120,7 @@ public class OrderService {
             ordersRepository.save(order);
             orderQueueService.exitQueue(order.getBoardIdx(), user.getIdx());
 
+
         } catch (IamportResponseException | IOException e) { // 해당하는 결제 정보를 찾지 못했을 때
             order.setStatus(OrderStatus.ORDER_FAIL);
             ordersRepository.save(order);
@@ -128,6 +133,7 @@ public class OrderService {
             orderQueueService.exitQueue(order.getBoardIdx(), user.getIdx());
             throw e;
         }
+
     }
 
     @Transactional
@@ -149,7 +155,6 @@ public class OrderService {
 
         if (order.getStatus() ==  OrderStatus.ORDER_COMPLETE && board.getEndedAt().isAfter(LocalDateTime.now())) {
             rollbackStock(order);
-
             String impUid = order.getPaymentId();
             try {
                 Payment payment = paymentService.getPaymentInfo(impUid);
@@ -173,6 +178,13 @@ public class OrderService {
                     .orElseThrow(() -> new InvalidCustomException(BaseResponseStatus.ORDER_FAIL_PRODUCT_NOT_FOUND));
             product.increaseStock(orderedProduct.getQuantity());
         });
+
+        List<ProductDto.OrderedProductInfo> orderedProductInfoList = orderedProducts.stream()
+                .map(OrderedProduct::toOrderedProductInfo)
+                .collect(Collectors.toList());
+        if (!boardServiceClient.isStockRestored(orderedProductInfoList)){
+            throw new InvalidCustomException(ORDER_CANCEL_FAIL);
+        }
     }
 
     public Page<OrderDto.CompanyOrderListResponse> companyOrderList(Long companyIdx, Integer page, String status, Integer month) {
@@ -234,11 +246,11 @@ public class OrderService {
     }
 
     private User validAndGetUser(Long userIdx) {
-        User user = userRepository.findById(userIdx).orElseThrow(
-                () -> new InvalidCustomException(USER_DETAIL_FAIL_USER_NOT_FOUND)
-        );
-        return user;
-    }
+            User user = userRepository.findById(userIdx).orElseThrow(
+                    ()-> new InvalidCustomException(USER_DETAIL_FAIL_USER_NOT_FOUND)
+            );
+            return user;
+        }
 
     private Company validAndGetCompany(Long companyIdx) {
         Company company = companyRepository.findById(companyIdx).orElseThrow(
@@ -246,4 +258,5 @@ public class OrderService {
         );
         return company;
     }
+
 }

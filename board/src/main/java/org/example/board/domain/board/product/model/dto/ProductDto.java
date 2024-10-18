@@ -79,4 +79,15 @@ public class ProductDto {
 
 		private Integer stock;
 	}
+
+	@Getter
+	@Builder
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class OrderedProduct{
+		private Long idx;
+
+		private Integer quantity;
+	}
+
 }

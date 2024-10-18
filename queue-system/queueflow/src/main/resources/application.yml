@@ -8,11 +8,17 @@ server:
     context-path: ${CONTEXT_PATH}
   port: 9090
 
+spring:
+  autoconfigure:
+    exclude: org.redisson.spring.starter.RedissonAutoConfiguration
 
-#redis:
-#  host: ${REDIS_HOST}
-#  port: ${REDIS_PORT}
-#  password: ${REDIS_PASSWORD}
+redis:
+  master:
+    host: ${REDIS_MASTER_HOST}
+  slave:
+    host: ${REDIS_SLAVE_HOST}
+  port: ${REDIS_PORT}
+  password: ${REDIS_PASSWORD}
 
 queue:
   proceed:
@@ -21,10 +27,6 @@ queue:
   allow:
     user:
       cnt: ${ALLOW_USER_CNT}
-spring:
-  data:
-    redis:
-      host: 192.0.200.71
-      port: 6379
+
   application:
     name: queue-service

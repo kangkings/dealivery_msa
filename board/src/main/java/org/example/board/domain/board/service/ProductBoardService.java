@@ -168,9 +168,6 @@ public class ProductBoardService {
 	}
 
 	private ProductBoard saveProductBoard(Long companyIdx, ProductBoardDto.BoardCreateRequest boardCreateRequest, String productThumbnailUrl, String productDetailUrl) {
-		if (true){
-			throw new RuntimeException();
-		}
 		Category category = categoryRepository.findByName(boardCreateRequest.getCategory().getType());
 		ProductBoard productBoard = boardCreateRequest.toEntity(companyIdx, productThumbnailUrl, productDetailUrl, category);
 		return productBoardRepository.save(productBoard);
@@ -229,4 +226,39 @@ public class ProductBoardService {
 		}
 	}
 
+	public Boolean decreaseStcok(List<ProductDto.OrderedProduct> orderedProducts) {
+		try{
+			List<Product> products = orderedProducts.stream()
+					.map(product -> productRepository.findById(product.getIdx()).orElseThrow(
+							() -> new InvalidCustomException(BaseResponseStatus.FAIL)
+					)).collect(Collectors.toList());
+			for (int i = 0; i < products.size(); i++) {
+				Product product = products.get(i);
+				Integer quantity = orderedProducts.get(i).getQuantity(); // 해당 product에 맞는 quantity 가져오기
+				product.decreaseStock(quantity); // 재고 감소
+			}
+			productRepository.saveAll(products);
+			return true;
+		}catch (Exception e){
+			return false;
+		}
+	}
+
+	public Boolean restoreStcok(List<ProductDto.OrderedProduct> orderedProducts) {
+		try{
+			List<Product> products = orderedProducts.stream()
+					.map(product -> productRepository.findById(product.getIdx()).orElseThrow(
+							() -> new InvalidCustomException(BaseResponseStatus.FAIL)
+					)).collect(Collectors.toList());
+			for (int i = 0; i < products.size(); i++) {
+				Product product = products.get(i);
+				Integer quantity = orderedProducts.get(i).getQuantity(); // 해당 product에 맞는 quantity 가져오기
+				product.increaseStock(quantity); // 재고 증가
+			}
+			productRepository.saveAll(products);
+			return true;
+		}catch (Exception e){
+			return false;
+		}
+	}
 }

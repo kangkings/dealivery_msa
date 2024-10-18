@@ -98,4 +98,5 @@ public class UserController {
         userService.editDetail(userIdx,request);
         return new BaseResponse();
     }
+
 }
