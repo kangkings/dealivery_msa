@@ -15,6 +15,8 @@ import org.example.board.domain.board.product.model.entity.Product;
 import org.example.board.domain.board.product.repository.ProductRepository;
 import org.example.board.domain.board.repository.ProductBoardRepository;
 import org.example.board.domain.board.repository.ProductThumbnailImageRepository;
+import org.example.board.domain.company.model.entity.Company;
+import org.example.board.domain.company.repository.CompanyRepository;
 import org.example.board.domain.likes.repository.LikesRepository;
 import org.example.board.global.adaptor.out.BoardKafkaProducer;
 import org.example.board.global.adaptor.out.UserServiceClient;
@@ -45,6 +47,7 @@ public class ProductBoardService {
 	private final ProductRepository productRepository;
 	private final ProductThumbnailImageRepository productThumbnailImageRepository;
 	private final CategoryRepository categoryRepository;
+	private final CompanyRepository companyRepository;
 	private final LikesRepository likesRepository;
 	private final AmazonS3 s3;
 	@Value("${cloud.aws.s3.bucket}")
@@ -121,7 +124,8 @@ public class ProductBoardService {
 			savedProductBoard = saveProductBoard(companyIdx, boardCreateRequest, thumbnailUrls.get(0), productDetailUrl);
 		} catch (Exception e) {
 			// 회원 마이크로 서비스에서 Company의 필요한 정보 알아와서 Company 정보 저장하고
-			companyIdx = userServiceClient.getCompanyIdx();  // UserServiceClient 호출
+			Company company = userServiceClient.getCompany(companyIdx);  // UserServiceClient 호출
+			companyRepository.save(company);
 			savedProductBoard = saveProductBoard(companyIdx, boardCreateRequest, thumbnailUrls.get(0), productDetailUrl);
 		}
 
@@ -164,6 +168,9 @@ public class ProductBoardService {
 	}
 
 	private ProductBoard saveProductBoard(Long companyIdx, ProductBoardDto.BoardCreateRequest boardCreateRequest, String productThumbnailUrl, String productDetailUrl) {
+		if (true){
+			throw new RuntimeException();
+		}
 		Category category = categoryRepository.findByName(boardCreateRequest.getCategory().getType());
 		ProductBoard productBoard = boardCreateRequest.toEntity(companyIdx, productThumbnailUrl, productDetailUrl, category);
 		return productBoardRepository.save(productBoard);

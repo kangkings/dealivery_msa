@@ -68,4 +68,12 @@ public class Company {
                 .role(this.role)
                 .build();
     }
+
+    public CompanyDto.CompanyNotFoundResponse toCompanyNotFoundResponse(){
+        return CompanyDto.CompanyNotFoundResponse.builder()
+                .idx(this.idx)
+                .companyName(this.companyName)
+                .email(this.email)
+                .build();
+    }
 }

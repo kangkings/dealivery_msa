@@ -39,8 +39,11 @@ public class CompanyService {
         return true;
     }
 
-    public Long getCurrentCompanyIdx(Long companyId) {
-        Optional<Company> company = companyRepository.findById(companyId);
-        return company.map(Company::getIdx).orElseThrow(() -> new IllegalArgumentException("Company 찾을 수 없음"));
+    public CompanyDto.CompanyNotFoundResponse getCurrentCompany(Long companyIdx) {
+        Company company = companyRepository.findById(companyIdx).orElseThrow(
+                ()-> new InvalidCustomException(BaseResponseStatus.USER_DETAIL_FAIL_USER_NOT_FOUND
+                ));
+        return company.toCompanyNotFoundResponse();
     }
+
 }

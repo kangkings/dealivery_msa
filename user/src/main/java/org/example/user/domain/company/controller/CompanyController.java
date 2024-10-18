@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.user.domain.company.model.dto.CompanyAuthTokenDto;
 import org.example.user.domain.company.model.dto.CompanyDto;
+import org.example.user.domain.company.model.entity.Company;
 import org.example.user.domain.company.service.CompanyAuthTokenService;
 import org.example.user.domain.company.service.CompanyRegisterVerifyService;
 import org.example.user.domain.company.service.CompanyService;
@@ -73,7 +74,7 @@ public class CompanyController {
     }
 
     @GetMapping("/company-idx")
-    public Long getCompanyIdx(@RequestParam Long companyId) {
-        return companyService.getCurrentCompanyIdx(companyId);  // 주어진 회사 ID로 회사 정보를 반환
+    public CompanyDto.CompanyNotFoundResponse getCompany(@RequestParam Long companyIdx) {
+        return companyService.getCurrentCompany(companyIdx);  // 주어진 회사 ID로 회사 정보를 반환
     }
 }

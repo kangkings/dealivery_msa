@@ -122,4 +122,14 @@ public class CompanyDto {
         private String password;
         private String role;
     }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CompanyNotFoundResponse{
+        private Long idx;
+        private String companyName;
+        private String email;
+    }
 }
