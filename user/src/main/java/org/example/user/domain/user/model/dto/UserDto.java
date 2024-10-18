@@ -218,4 +218,16 @@ public class UserDto {
         private String role;
         private String type;
     }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class AuthUserNotFoundResponse{
+        private Long idx;
+        private String email;
+        private String password;
+        private String role;
+        private String type;
+    }
 }

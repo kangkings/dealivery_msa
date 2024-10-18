@@ -99,4 +99,8 @@ public class UserController {
         return new BaseResponse();
     }
 
+    @GetMapping("/user-email")
+    public UserDto.AuthUserNotFoundResponse getUserEmail(@RequestParam String email){
+        return userService.getAuthUser(email);
+    }
 }

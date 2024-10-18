@@ -24,7 +24,7 @@ public class SecurityConfig {
                 .authorizeExchange(authorize -> authorize
                         .pathMatchers("/api/user/signup","/api/login","/api/logout",
                                 "/api/company/signup","/api/company/email/verify","/api/user/email/verify",
-                                "/api/user/social/signup","/api/user/user-idx/**").permitAll()
+                                "/api/user/social/signup", "/api/user/user-email/**").permitAll()
                         .pathMatchers("/api/user/**").hasRole("USER") // /user/** 경로는 ROLE_USER 권한 필요
                         .pathMatchers("/api/orders/**").authenticated()
                         .anyExchange().permitAll() // 나머지 요청은 인증 필요
