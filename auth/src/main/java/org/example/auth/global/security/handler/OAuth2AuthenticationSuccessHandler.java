@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.auth.global.adaptor.out.UserServiceClient;
 import org.example.auth.global.constants.RedisKeys;
 import org.example.auth.global.security.custom.model.dto.CustomOAuth2User;
 import org.example.auth.domain.user.model.entity.User;
@@ -33,6 +34,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final RedisTemplate<String, Object> redisTemplate;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final UserServiceClient userServiceClient;
 
     @Value("${domain}")
     private String domain;
@@ -47,40 +49,47 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         Optional<User> optionalUser = userRepository.findByEmail(oAuth2User.getEmail());
         if (optionalUser.isEmpty()){
             //가입된 적이 없으면 가입 기본정보 리턴
-            getRedirectStrategy().sendRedirect(request, response, domain + "/login/redirect?"+"isSuccess="+true+"&isExist="+false
-                    +"&name="+name+"&email="+email+"&type="+type);
+            User user = userServiceClient.getUserByEmail(oAuth2User.getEmail());
+            if(user == null) {
+                getRedirectStrategy().sendRedirect(request, response, domain + "/login/redirect?" + "isSuccess=" + true + "&isExist=" + false
+                        + "&name=" + name + "&email=" + email + "&type=" + type);
+            }
+            else {
+                userRepository.save(user);
+                optionalUser = userRepository.findByEmail(user.getEmail());
+            }
+        }
+        //받아온 아이디로 가입된적이 있으면 토큰 발급 후 리다이렉트
+        User user = optionalUser.get();
+        //oauth 로그인 타입이 일치하지 않으면 실패 (naver로그인 인데 google로 등록된 이메일일 경우)
+        if (!user.getType().equals(type)){
+            getRedirectStrategy().sendRedirect(request, response, domain + "/login/redirect?"+"isSuccess="+false);
         }else {
-            //받아온 아이디로 가입된적이 있으면 토큰 발급 후 리다이렉트
-            User user = optionalUser.get();
-            //oauth 로그인 타입이 일치하지 않으면 실패 (naver로그인 인데 google로 등록된 이메일일 경우)
-            if (!user.getType().equals(type)){
-                getRedirectStrategy().sendRedirect(request, response, domain + "/login/redirect?"+"isSuccess="+false);
-            }else {
-                String refreshToken = jwtUtil.createRefreshToken(user.getIdx(), user.getEmail(), user.getRole());
-                String accessToken = jwtUtil.createAccessToken(user.getIdx(), user.getEmail(), user.getRole());
+            String refreshToken = jwtUtil.createRefreshToken(user.getIdx(), user.getEmail(), user.getRole());
+            String accessToken = jwtUtil.createAccessToken(user.getIdx(), user.getEmail(), user.getRole());
 
-                //TODO
-                // Redis 트랜잭션 처리
+            //TODO
+            // Redis 트랜잭션 처리
 
-                //RefreshToken 엔티티 저장 (기존값 있으면 삭제)
-                try {
-                    Object existingRefreshToken = redisTemplate.opsForValue().get(RedisKeys.USER_REFRESH_TOKEN.getKey() +user.getEmail());
-                    if ( existingRefreshToken != null){
-                        redisTemplate.delete(RedisKeys.USER_REFRESH_TOKEN.getKey()+user.getEmail());
-                    }
-
-                    redisTemplate.opsForValue().set(RedisKeys.USER_REFRESH_TOKEN.getKey()+user.getEmail(), refreshToken,jwtUtil.getREFRESH_EXPIRE(), TimeUnit.MILLISECONDS);
-
-                    createTokenCookies(response, accessToken, refreshToken, "user");
-                    getRedirectStrategy().sendRedirect(request, response,
-                            domain + "/login/redirect?"+"isSuccess="+true+"&isExist="+true+"&role="+user.getRole());
-                }catch (Exception e){
-                    //Todo
-                    // 500에러 안나오게 응답추가
-                    log.error("Redis Exec Error");
+            //RefreshToken 엔티티 저장 (기존값 있으면 삭제)
+            try {
+                Object existingRefreshToken = redisTemplate.opsForValue().get(RedisKeys.USER_REFRESH_TOKEN.getKey() +user.getEmail());
+                if ( existingRefreshToken != null){
+                    redisTemplate.delete(RedisKeys.USER_REFRESH_TOKEN.getKey()+user.getEmail());
                 }
 
+                redisTemplate.opsForValue().set(RedisKeys.USER_REFRESH_TOKEN.getKey()+user.getEmail(), refreshToken,jwtUtil.getREFRESH_EXPIRE(), TimeUnit.MILLISECONDS);
+
+                createTokenCookies(response, accessToken, refreshToken, "user");
+                getRedirectStrategy().sendRedirect(request, response,
+                        domain + "/login/redirect?"+"isSuccess="+true+"&isExist="+true+"&role="+user.getRole());
+            }catch (Exception e){
+                //Todo
+                // 500에러 안나오게 응답추가
+                log.error("Redis Exec Error");
             }
+
+
         }
     }
 

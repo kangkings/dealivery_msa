@@ -64,4 +64,11 @@ public class UserService {
         user.editDetail(request);
         userRepository.save(user);
     }
+
+    public UserDto.AuthUserNotFoundResponse getAuthUser(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow(
+                () -> new InvalidCustomException(BaseResponseStatus.USER_DETAIL_FAIL_USER_NOT_FOUND
+                ));
+        return user.toAuthUserNotFoundResponse();
+    }
 }

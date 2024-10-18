@@ -39,11 +39,18 @@ public class CompanyService {
         return true;
     }
 
-    public CompanyDto.CompanyNotFoundResponse getCurrentCompany(Long companyIdx) {
+    public CompanyDto.BoardCompanyNotFoundResponse getCurrentCompany(Long companyIdx) {
         Company company = companyRepository.findById(companyIdx).orElseThrow(
                 ()-> new InvalidCustomException(BaseResponseStatus.USER_DETAIL_FAIL_USER_NOT_FOUND
                 ));
         return company.toCompanyNotFoundResponse();
+    }
+
+    public CompanyDto.AuthCompanyNotFoundResponse getAuthCompany(String email) {
+        Company company = companyRepository.findByEmail(email).orElseThrow(
+                ()-> new InvalidCustomException(BaseResponseStatus.USER_DETAIL_FAIL_USER_NOT_FOUND
+                ));
+        return company.toAuthCompanyNotFoundResponse();
     }
 
 }

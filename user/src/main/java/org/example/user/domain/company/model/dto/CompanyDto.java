@@ -127,9 +127,20 @@ public class CompanyDto {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class CompanyNotFoundResponse{
+    public static class BoardCompanyNotFoundResponse{
         private Long idx;
         private String companyName;
         private String email;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class AuthCompanyNotFoundResponse {
+        private Long idx;
+        private String email;
+        private String password;
+        private String role;
     }
 }

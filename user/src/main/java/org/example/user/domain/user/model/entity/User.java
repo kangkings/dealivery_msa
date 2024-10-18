@@ -100,4 +100,14 @@ public class User {
                 .type(this.type)
                 .build();
     }
+
+    public UserDto.AuthUserNotFoundResponse toAuthUserNotFoundResponse(){
+        return UserDto.AuthUserNotFoundResponse.builder()
+                .idx(this.idx)
+                .email(this.email)
+                .password(this.password)
+                .role(this.role)
+                .type(this.type)
+                .build();
+    }
 }

@@ -69,11 +69,20 @@ public class Company {
                 .build();
     }
 
-    public CompanyDto.CompanyNotFoundResponse toCompanyNotFoundResponse(){
-        return CompanyDto.CompanyNotFoundResponse.builder()
+    public CompanyDto.BoardCompanyNotFoundResponse toCompanyNotFoundResponse(){
+        return CompanyDto.BoardCompanyNotFoundResponse.builder()
                 .idx(this.idx)
                 .companyName(this.companyName)
                 .email(this.email)
+                .build();
+    }
+
+    public CompanyDto.AuthCompanyNotFoundResponse toAuthCompanyNotFoundResponse(){
+        return CompanyDto.AuthCompanyNotFoundResponse.builder()
+                .idx(this.idx)
+                .email(this.email)
+                .password(this.password)
+                .role(this.role)
                 .build();
     }
 }
