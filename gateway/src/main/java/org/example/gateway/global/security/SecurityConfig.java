@@ -24,9 +24,15 @@ public class SecurityConfig {
                 .authorizeExchange(authorize -> authorize
                         .pathMatchers("/api/user/signup","/api/login","/api/logout",
                                 "/api/company/signup","/api/company/email/verify","/api/user/email/verify",
-                                "/api/user/social/signup", "/api/user/user-email/**").permitAll()
-                        .pathMatchers("/api/user/**").hasRole("USER") // /user/** 경로는 ROLE_USER 권한 필요
-                        .pathMatchers("/api/orders/**").authenticated()
+                                "/api/user/social/signup","/api/user/user-idx/**",
+                                "/api/product-boards/decrease/stock",
+                                "/api/product-boards/restore/stock",
+                                "/api/product-boards/list", "/api/product-boards/main/list"
+                        ,"/api/product-boards/*/detail").permitAll()
+//                        .pathMatchers("/api/product-boards/**").authenticated()
+//                        .pathMatchers("/api/user/**").hasRole("USER") // /user/** 경로는 ROLE_USER 권한 필요
+//                        .pathMatchers("/api/company/**").hasRole("COMPANY")
+//                        .pathMatchers("/api/orders/**").authenticated()
                         .anyExchange().permitAll() // 나머지 요청은 인증 필요
                 );
         http.addFilterBefore(jwtFilter, SecurityWebFiltersOrder.AUTHENTICATION);

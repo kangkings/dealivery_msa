@@ -50,7 +50,7 @@ public class BoardController {
 
 	@Operation(summary = "상품 게시글 목록 조회 API")
 	@GetMapping(value = "/list")
-	public BaseResponse list(@RequestHeader("X-User-Idx") Long userIdx, @RequestParam(value = "page", defaultValue = "1")Integer page, @RequestParam(required = false) String search) {
+	public BaseResponse list(@RequestHeader(value = "X-User-Idx", required = false) Long userIdx, @RequestParam(value = "page", defaultValue = "1")Integer page, @RequestParam(required = false) String search) {
 		Pageable pageable = PageRequest.of(page - 1, USER_LIST_SIZE);
 		Page<ProductBoardDto.BoardListResponse> boardListResponses;
 		if (userIdx == null) {
@@ -63,7 +63,7 @@ public class BoardController {
 
 	@Operation(summary = "상품 게시글 상세 조회 API")
 	@GetMapping(value = "/{idx}/detail")
-	public BaseResponse detail(@RequestHeader("X-User-Idx") Long userIdx, @PathVariable Long idx) {
+	public BaseResponse detail(@RequestHeader(value = "X-User-Idx", required = false) Long userIdx, @PathVariable Long idx) {
 		ProductBoardDto.BoardDetailResponse response;
 		if (userIdx == null) {
 			response = productBoardService.detail(idx);
