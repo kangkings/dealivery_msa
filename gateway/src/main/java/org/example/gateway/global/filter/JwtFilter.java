@@ -1,9 +1,12 @@
 package org.example.gateway.global.filter;
 
+import com.netflix.discovery.converters.Auto;
 import lombok.RequiredArgsConstructor;
 import org.example.gateway.global.constants.RedisKeys;
 import org.example.gateway.global.security.model.dto.CustomUserDetails;
 import org.example.gateway.global.util.JwtUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.ResponseCookie;
@@ -22,10 +25,15 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
 public class JwtFilter implements WebFilter {
     private final JwtUtil jwtUtil;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> slaveRedisTemplate;
+
+    public JwtFilter(JwtUtil jwtUtil, @Qualifier("masterRedisTemplate") RedisTemplate<String, Object> slaveRedisTemplate) {
+        this.jwtUtil = jwtUtil;
+        this.slaveRedisTemplate = slaveRedisTemplate;
+    }
+
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
@@ -84,8 +92,8 @@ public class JwtFilter implements WebFilter {
             String email = jwtUtil.getEmail(refreshToken);
             String existingRefreshToken = String.valueOf(
                     type.equals("user")
-                            ? redisTemplate.opsForValue().get(RedisKeys.USER_REFRESH_TOKEN.getKey() + email)
-                            : redisTemplate.opsForValue().get(RedisKeys.COMPANY_REFRESH_TOKEN.getKey() + email)
+                            ? slaveRedisTemplate.opsForValue().get(RedisKeys.USER_REFRESH_TOKEN.getKey() + email)
+                            : slaveRedisTemplate.opsForValue().get(RedisKeys.COMPANY_REFRESH_TOKEN.getKey() + email)
             );
 
             if (!existingRefreshToken.equals(refreshToken)) {

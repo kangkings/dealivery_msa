@@ -1,9 +1,15 @@
+redis:
+  master:
+    host: ${REDIS_MASTER_HOST}
+  slave:
+    host: ${REDIS_SLAVE_HOST}
+  port: ${REDIS_PORT}
+  password: ${REDIS_PASSWORD}
+
 spring:
-  data:
-    redis:
-      host: localhost
-      port: 6379
-      password: qwer1234
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
   application:
     name: auth-service
   jwt:
@@ -78,7 +84,6 @@ logging:
     org.hibernate.orm.jdbc.bind: trace
 
 server:
-  port: 8080
   tomcat:
     uri-encoding: UTF-8
   servlet:
@@ -90,9 +95,5 @@ server:
 # ex. https://www.dealivery.com
 domain: ${DOMAIN}
 
-eureka:
-  client:
-    register-with-eureka: true
-    fetch-registry: true
-    service-url:
-      defaultZone: http://localhost:8761/eureka
+custom:
+  kafka-url: ${KAFKA_URL}

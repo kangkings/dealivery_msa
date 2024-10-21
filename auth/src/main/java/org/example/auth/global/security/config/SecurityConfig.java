@@ -8,6 +8,8 @@ import org.example.auth.global.security.filter.LoginFilter;
 import org.example.auth.global.security.handler.*;
 
 import org.example.auth.global.security.jwt.JwtUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,7 +29,6 @@ import org.springframework.web.filter.CorsFilter;
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtUtil jwtUtil;
     private final AuthenticationConfiguration authenticationConfiguration;
@@ -36,9 +37,33 @@ public class SecurityConfig {
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final CustomLogoutSuccessHandler customLogoutSuccessHandler;
     private final OAuth2Service oAuth2Service;
-    private final RedisTemplate<String,Object> redisTemplate;
+    @Qualifier("masterRedisTemplate")
+    private final RedisTemplate<String, Object> masterRedisTemplate;
+    @Qualifier("slaveRedisTemplate")
+    private final RedisTemplate<String, Object> slaveRedisTemplate;
     private final CustomLogoutHandler customLogoutHandler;
 
+    public SecurityConfig(JwtUtil jwtUtil,
+                          AuthenticationConfiguration authenticationConfiguration,
+                          AccessDeniedHandler accessDeniedHandler,
+                          LoginFailureHandler loginFailureHandler,
+                          OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
+                          CustomLogoutSuccessHandler customLogoutSuccessHandler,
+                          OAuth2Service oAuth2Service,
+                          @Qualifier("masterRedisTemplate") RedisTemplate<String, Object> masterRedisTemplate,
+                          @Qualifier("slaveRedisTemplate") RedisTemplate<String, Object> slaveRedisTemplate,
+                          CustomLogoutHandler customLogoutHandler) {
+        this.jwtUtil = jwtUtil;
+        this.authenticationConfiguration = authenticationConfiguration;
+        this.accessDeniedHandler = accessDeniedHandler;
+        this.loginFailureHandler = loginFailureHandler;
+        this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
+        this.customLogoutSuccessHandler = customLogoutSuccessHandler;
+        this.oAuth2Service = oAuth2Service;
+        this.masterRedisTemplate = masterRedisTemplate;
+        this.slaveRedisTemplate = slaveRedisTemplate;
+        this.customLogoutHandler = customLogoutHandler;
+    }
 
     @Value("${domain}")
     private String domain;
@@ -120,7 +145,7 @@ public class SecurityConfig {
             );
 
         //필터생성 및 설정추가
-        LoginFilter loginFilter = new LoginFilter(redisTemplate,jwtUtil, authenticationManager(authenticationConfiguration));
+        LoginFilter loginFilter = new LoginFilter(masterRedisTemplate,slaveRedisTemplate,jwtUtil, authenticationManager(authenticationConfiguration));
         loginFilter.setFilterProcessesUrl("/login");
         loginFilter.setAuthenticationFailureHandler(loginFailureHandler);
 
