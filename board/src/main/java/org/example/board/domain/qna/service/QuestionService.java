@@ -12,6 +12,8 @@ import org.example.board.domain.user.repository.UserRepository;
 import org.example.board.global.common.constants.AnswerStatus;
 import org.example.board.global.common.constants.BaseResponseStatus;
 import org.example.board.global.exception.InvalidCustomException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -42,10 +44,8 @@ public class QuestionService {
         return question.toCreateResponse();  // 엔티티의 변환 메서드 사용
     }
 
-    public List<QuestionDto.QuestionListResponse> getQuestions() {
-        return questionRepository.findAll().stream()
-                .map(Question::toListResponse)  // 엔티티의 변환 메서드 사용
-                .collect(Collectors.toList());
+    public Page<QuestionDto.QuestionListResponse> getQuestionsByProductBoardIdx(Long productBoardIdx, Pageable pageable) {
+        return questionRepository.findByProductBoard_Idx(productBoardIdx, pageable).map(Question::toListResponse);
     }
 
     public void deleteQuestion(Long questionId, String email){
@@ -66,21 +66,12 @@ public class QuestionService {
         questionRepository.delete(question);
     }
 
-    public List<QuestionDto.QuestionListResponse> getQuestionsByCompanyEmail(String companyEmail) {
-        List<ProductBoard> productBoards = productBoardRepository.findByCompanyEmail(companyEmail);
-
-        return questionRepository.findByProductBoardIn(productBoards).stream()
-                .map(Question::toListResponse)  // 엔티티의 변환 메서드 사용
-                .collect(Collectors.toList());
-    }
-
-    public List<QuestionDto.QuestionListResponse> getQuestionsByUserEmail(String userEmail) {
+    public Page<QuestionDto.QuestionListResponse> getQuestionsByUserEmail(String userEmail, Pageable pageable) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new InvalidCustomException(BaseResponseStatus.QNA_USER_NOT_FOUND));
 
-        return questionRepository.findByUser(user).stream()
-                .map(Question::toListResponse)  // 엔티티의 변환 메서드 사용
-                .collect(Collectors.toList());
+        return questionRepository.findByUser(user, pageable)
+                .map(Question::toListResponse);
     }
 
     public void updateQuestion(Long id, QuestionDto.QuestionUpdateRequest request, String email) {
@@ -96,5 +87,15 @@ public class QuestionService {
         // 문의 내용 업데이트
         question.updateContent(request.getTitle(), request.getContent());
         questionRepository.save(question);  // 수정된 문의 저장
+    }
+
+    public Page<QuestionDto.QuestionListResponse> getQuestionsByCompanyBoard(String companyEmail, Pageable pageable) {
+        List<ProductBoard> productBoards = productBoardRepository.findByCompanyEmail(companyEmail);
+        if (productBoards.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        return questionRepository.findByProductBoardIn(productBoards, pageable)
+                .map(Question::toListResponse);
     }
 }
