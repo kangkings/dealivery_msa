@@ -9,7 +9,7 @@ import org.example.user.domain.company.repository.CompanyRepository;
 import org.example.user.global.adaptor.out.CompanyKafkaProducer;
 import org.example.user.global.common.constants.BaseResponseStatus;
 import org.example.user.global.exception.InvalidCustomException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -19,7 +19,6 @@ import java.util.Optional;
 public class CompanyService {
 
     private final CompanyRepository companyRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
     private final CompanyKafkaProducer companyKafkaProducer;
 
     public Boolean isExist(String email){
@@ -33,7 +32,7 @@ public class CompanyService {
 
     @Transactional
     public boolean signup(CompanyDto.CompanySignupRequest request) {
-        Company newCompany = companyRepository.save(request.toEntity(passwordEncoder.encode(request.getPassword())));
+        Company newCompany = companyRepository.save(request.toEntity(BCrypt.hashpw(request.getPassword(), BCrypt.gensalt())));
 
         companyKafkaProducer.sendSignupMessage(newCompany.toCompanySignupComplete());
         return true;

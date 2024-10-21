@@ -1,6 +1,5 @@
 package org.example.gateway.global.filter;
 
-import com.netflix.discovery.converters.Auto;
 import lombok.RequiredArgsConstructor;
 import org.example.gateway.global.constants.RedisKeys;
 import org.example.gateway.global.security.model.dto.CustomUserDetails;

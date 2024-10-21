@@ -10,7 +10,8 @@ import org.example.user.domain.user.repository.UserRepository;
 import org.example.user.global.adaptor.out.UserKafkaProducer;
 import org.example.user.global.common.constants.BaseResponseStatus;
 import org.example.user.global.exception.InvalidCustomException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +23,6 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final DeliveryRepository deliveryRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
     private final UserKafkaProducer userKafkaProducer;
 
     //등록된 계정이 있는지 검사
@@ -43,7 +43,7 @@ public class UserService {
 
     @Transactional
     public boolean signup(UserDto.UserSignupRequest request) {
-        User newUser = userRepository.save(request.toEntity(passwordEncoder.encode(request.getPassword())));
+        User newUser = userRepository.save(request.toEntity(BCrypt.hashpw(request.getPassword(), BCrypt.gensalt())));
         deliveryRepository.save(request.toDeliveryEntity(newUser));
         userKafkaProducer.sendSignupMessage(newUser.toUserSignupComplete());
         return true;
