@@ -16,6 +16,7 @@ import org.example.auth.global.security.custom.model.dto.CustomUserDetails;
 import org.example.auth.global.constants.BaseResponse;
 import org.example.auth.global.security.jwt.JwtUtil;
 import org.example.auth.domain.user.model.dto.UserDto;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -35,7 +36,8 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final Integer COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> masterRedisTemplate;
+    private final RedisTemplate<String, Object> slaveRedisTemplate;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
 
@@ -93,12 +95,12 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
         //RefreshToken 엔티티 저장 (기존값 있으면 삭제)
         try {
-            Object existingRefreshToken = redisTemplate.opsForValue().get(RedisKeys.USER_REFRESH_TOKEN.getKey() +email);
+            Object existingRefreshToken = slaveRedisTemplate.opsForValue().get(RedisKeys.USER_REFRESH_TOKEN.getKey() +email);
             if ( existingRefreshToken != null){
-                redisTemplate.delete(RedisKeys.USER_REFRESH_TOKEN.getKey()+email);
+                masterRedisTemplate.delete(RedisKeys.USER_REFRESH_TOKEN.getKey()+email);
             }
 
-            redisTemplate.opsForValue().set(RedisKeys.USER_REFRESH_TOKEN.getKey()+email, refreshToken,jwtUtil.getREFRESH_EXPIRE(), TimeUnit.MILLISECONDS);
+            masterRedisTemplate.opsForValue().set(RedisKeys.USER_REFRESH_TOKEN.getKey()+email, refreshToken,jwtUtil.getREFRESH_EXPIRE(), TimeUnit.MILLISECONDS);
 
             // 쿠키 설정
             createTokenCookies(response, accessToken, refreshToken, "user");
@@ -127,11 +129,11 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
         // RefreshToken 엔티티 저장 (기존값 있으면 삭제)
         try {
-            Object existingRefreshToken = redisTemplate.opsForValue().get(RedisKeys.COMPANY_REFRESH_TOKEN.getKey() +email);
+            Object existingRefreshToken = slaveRedisTemplate.opsForValue().get(RedisKeys.COMPANY_REFRESH_TOKEN.getKey() +email);
             if ( existingRefreshToken != null){
-                redisTemplate.delete(RedisKeys.COMPANY_REFRESH_TOKEN.getKey()+email);
+                masterRedisTemplate.delete(RedisKeys.COMPANY_REFRESH_TOKEN.getKey()+email);
             }
-            redisTemplate.opsForValue().set(RedisKeys.COMPANY_REFRESH_TOKEN.getKey()+email, refreshToken,jwtUtil.getREFRESH_EXPIRE(), TimeUnit.MILLISECONDS);
+            masterRedisTemplate.opsForValue().set(RedisKeys.COMPANY_REFRESH_TOKEN.getKey()+email, refreshToken,jwtUtil.getREFRESH_EXPIRE(), TimeUnit.MILLISECONDS);
 
             // 쿠키 설정
             createTokenCookies(response, accessToken, refreshToken, "company");

@@ -6,7 +6,6 @@ server:
       charset: UTF-8
       force: true
     context-path: ${CONTEXT_PATH}
-  port: 8090
 
 spring:
   autoconfigure:

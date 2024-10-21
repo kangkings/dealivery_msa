@@ -40,14 +40,19 @@ derby.log
 /backend/build/
 /eureka/build/
 /gateway/build/
+/gateway/.idea/
 /user/build/
+/user/.idea/
 /board/build/
+/board/.idea/
 /orders/build/
+/orders/.idea/
 /spring-*/build/
 /framework-*/build/
 /integration-tests/build/
 /src/asciidoc/build/
 spring-test/test-output/
+
 
 # Maven artifacts
 pom.xml
